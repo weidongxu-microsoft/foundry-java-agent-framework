@@ -11,9 +11,9 @@ upstream); prior turns are prepended and the model runs statelessly. See `Conver
 - On Foundry we observed **`Started HostedAgentApplication` once per request** (a ~13 s cold start
   right before each request's own log line) → the container **cold-starts a fresh pod per request**
   (scale-to-zero). Heap state is wiped between turns.
-- Result: **Test 4** (turn 1 states a passphrase, turn 2 recalls it via `previous_response_id`)
-  fails — the save from turn 1 and the load in turn 2 hit different JVMs. Single-request tests
-  (0/6/8/9) pass; only cross-request threading breaks.
+- Result: the **`multi-turn`** scenario (turn 1 states a passphrase, turn 2 recalls it via `previous_response_id`)
+  fails — the save from turn 1 and the load in turn 2 hit different JVMs. Single-request scenarios
+  pass; only cross-request threading breaks.
 - The store *logic* is correct (verified: same key saved then loaded; unit tests green). It's purely
   a **process-lifetime** issue.
 
@@ -95,7 +95,7 @@ the same container protocol.
    surfaced through that SDK, and **empirically our raw container receives only the id, not the
    messages**. Reading the `*-responses` source will confirm whether Foundry forwards prior turns to
    a container inline or expects the container to resolve the id — if inline, threading is free. Our
-   **Test 4 direct client does NOT replay** (only sends `previous_response_id`), so it exercises the
+   **`multi-turn` direct client does NOT replay** (only sends `previous_response_id`), so it exercises the
    container-owned path — that synthetic case is what fails.
 2. **File store under `$HOME/.checkpoints` (FREE).** Mirror `FileSystemAgentSessionStore`: persist
    history JSON under `$HOME` (default `/home/session`). Relies on Foundry's guarantee that `$HOME`
@@ -109,7 +109,7 @@ the same container protocol.
 - Pursue **(2) the free file store**, env-gated (`CONVERSATION_STORE=file|memory`, default `memory`
   so local/tests are unaffected), writing under `$HOME/.checkpoints`. This is parity with MAF's
   **container-owned** `IConversationStorage` path + the `$HOME/.checkpoints` durable location — the
-  portable parity we *can* achieve without the closed platform SDK. Redeploy and confirm Test 4
+  portable parity we *can* achieve without the closed platform SDK. Redeploy and confirm `multi-turn`
   survives the cold starts. If `$HOME` persists → free multi-turn threading; if not → document the
   in-memory limitation and lean on **(1)** platform-managed history for the real Playground path.
 - **Naming:** keep `ConversationStore` (= `IConversationStorage`, chat turns). Do **not** conflate

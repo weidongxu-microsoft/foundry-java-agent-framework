@@ -1,6 +1,6 @@
 # Foundry hosted-agent deploy + lifecycle via SDK / raw data-plane REST (no foundry-mcp)
 
-Captured while deploying `java-hosted-agent` v7 (langchain4j backend) for client Test 10, and
+Captured while deploying `java-hosted-agent` v7 (langchain4j backend) for the client `backend-identity` scenario, and
 adding enable/disable + session controls to the `admin` utility.
 Use this when the foundry-mcp `agent_update` / `agent_container_control` tools are **not**
 available (e.g. the Copilot CLI session). Prefer the `azure-ai-agents` SDK (`AgentsClient`,
@@ -83,5 +83,5 @@ surface accepts it. Minimize tool surface for a plain redeploy:
 ## Verify
 
 `metadata.chat_client` on the response identifies the live backend (server-stamped by
-`AgentResponseHandler.withResponseMetadata`). Client **Test 10** (`EXPECTED_CHAT_CLIENT=langchain4j`)
+`AgentResponseHandler.withResponseMetadata`). The client **`backend-identity`** scenario (`EXPECTED_CHAT_CLIENT=langchain4j`)
 asserts it.

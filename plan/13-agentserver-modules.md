@@ -64,7 +64,7 @@ Workloads (`app/`) depend on `agentserver-spring` + `agentserver-foundry`.
 2. **Servlet filters** — `x-request-id` correlation (+ W3C baggage), `x-platform-server` version
    header, inbound request logging.
 3. **Graceful shutdown drain** — on SIGTERM, drain in-flight requests (MAF default 30 s) before exit.
-4. **SSE keep-alive** — `SseKeepAliveSession` equivalent; likely fixes the streaming (Test 6)
+4. **SSE keep-alive** — `SseKeepAliveSession` equivalent; likely fixes the streaming (`streaming` scenario)
    cold-start flake.
 5. **`FoundryEnvironment`** — typed access to `FOUNDRY_PROJECT_ENDPOINT`, `FOUNDRY_AGENT_NAME`,
    `FOUNDRY_AGENT_VERSION`, `FOUNDRY_AGENT_SESSION_ID`, `PORT` (default 8088), etc.
