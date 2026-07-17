@@ -20,6 +20,3 @@ Thumbs.db
 .memory/
 
 .last_image_tag
-
-# Generated presentation artifacts (deck source lives in plan/18-*.md)
-*.pptx
