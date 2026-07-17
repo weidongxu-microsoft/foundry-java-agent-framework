@@ -126,6 +126,15 @@ rules, but logged): `AzureAISearchContextProvider` (RAG over Azure AI Search), `
 | LangChain4j (Java-specific adapter) | ✅ `langchain4j/` | No MAF equivalent; Java ecosystem bridge. App opts in via `CHAT_CLIENT=langchain4j` (OpenAI-compatible model); the hosted agent stamps `metadata.chat_client`/`chat_model` on every response so the `client` e2e distinguishes the backend. |
 | Anthropic / Gemini / Bedrock / Ollama / Mistral / CopilotStudio | N/A | Breadth; add on demand. |
 
+## Samples
+
+MAF ships a progressive, runnable **samples** suite per language (`python/samples/`,
+`dotnet/samples/`) under an identical `01`–`05` numbering. See `plan/16-samples-parity.md`.
+
+| Feature | .NET | Py | Java | Java location | Notes |
+|---|---|---|---|---|---|
+| Samples suite (`01-get-started` … `05-end-to-end`) | ✅ | ✅ | ⚠️ | `samples/` | Scaffold only: `01`–`05` dirs + READMEs mapped to framework surfaces. Sample code TBD (start with `01-get-started`). Migration guides (AutoGen/SK) N/A — no Java predecessor. |
+
 ## Out-of-scope breadth (tracked, not targeted)
 
 - **Protocols / surfaces:** A2A, AG-UI, CopilotStudio, DevUI, Declarative agents. N/A for now.

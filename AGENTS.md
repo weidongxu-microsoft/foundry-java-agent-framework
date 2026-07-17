@@ -23,6 +23,7 @@ as **test / reference workloads** that exercise the framework, not as the delive
   workload.
 - `admin/` — memory-store admin utility. Test workload.
 - `plan/` — design notes, findings, and captured learnings (see `plan/README.md` index).
+- `samples/` — progressive runnable examples (MAF-parity `01`–`05`); scaffold in progress.
 - `.agents/skills/` — reusable Copilot skills for this repo.
 
 ## Conventions

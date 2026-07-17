@@ -39,6 +39,13 @@ that depend on the framework as installed artifacts.
 | `client/` | Console client that invokes a deployed agent end-to-end and verifies its features. |
 | `admin/` | Memory-store + hosted-agent lifecycle admin CLI. |
 
+## Samples (`samples/`)
+
+Progressive, runnable examples mirroring MAF's `python/samples/` / `dotnet/samples/` (`01-get-started`
+→ `05-end-to-end`). Currently a **scaffold** (folders + READMEs mapped to framework surfaces); sample
+code is being added incrementally. See [`samples/README.md`](samples/README.md) and
+[`plan/16-samples-parity.md`](plan/16-samples-parity.md).
+
 ## Build & test
 
 Install the framework first, then build each workload independently.
