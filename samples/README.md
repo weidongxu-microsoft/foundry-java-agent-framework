@@ -3,9 +3,9 @@
 Runnable, progressive examples for the **Java Agent Framework** — the Java counterpart to MAF's
 `python/samples/` and `dotnet/samples/`. Structure mirrors MAF's numbered progression.
 
-> **Status:** scaffold + first sample — folders + READMEs are in place, and `01-get-started/`
-> ships a runnable `HelloAgent`; remaining samples are being added incrementally.
-> See [`../plan/16-samples-parity.md`](../plan/16-samples-parity.md).
+> **Status:** implemented across all five categories — every folder ships runnable code (18 main
+> classes total). Model-backed samples require `OPENAI_API_KEY`; they are compile-verified here
+> (no live key was used to run them). See [`../plan/16-samples-parity.md`](../plan/16-samples-parity.md).
 
 ## Structure
 

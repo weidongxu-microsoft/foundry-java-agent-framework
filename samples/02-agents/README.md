@@ -3,18 +3,27 @@
 One focused example per framework concept, mirroring MAF's `02-agents/`. Only concepts the Java
 framework already ships are targeted (see `plan/11-parity-matrix.md`).
 
-> **Status:** scaffold — no code yet. Planned examples below.
+> **Status:** six examples implemented (runnable). All require `OPENAI_API_KEY`
+> (`OPENAI_MODEL` optional, default `gpt-4o-mini`; `OPENAI_BASE_URL` optional).
 
-| Topic | Framework surface |
-|-------|-------------------|
-| tools | `core/tool/FunctionTool`, hosted tools (`HostedWebSearchTool`, `HostedCodeInterpreterTool`, …) |
-| middleware | `core/middleware/*` (agent / function / chat pipelines) |
-| context-providers | the 12 cross-language providers under `core/harness`, `core/compaction`, `core/shell`, `core/codeact`, `foundry` |
-| mcp | `mcp/McpToolSource` (local, stdio/HTTP), `HostedMcpTool` (remote) |
-| skills | `core/skill/*` (progressive disclosure), `mcp/McpSkillSource` |
-| observability | `observability-opentelemetry/*` |
-| chat-client | `openai/`, `foundry/`, `langchain4j/` backends |
-| structured-output | `core/chat/ResponseFormat` |
-| agent-as-tool | `core/tool/AgentTool` |
+| Sample | Topic | Framework surface | Status |
+|--------|-------|-------------------|--------|
+| [`FunctionTools`](src/main/java/io/github/weidongxu/agentframework/samples/agents/FunctionTools.java) | tools | `core/tool/FunctionTool` | ✅ |
+| [`AgentAsTool`](src/main/java/io/github/weidongxu/agentframework/samples/agents/AgentAsTool.java) | agent-as-tool | `core/tool/AgentTool` | ✅ |
+| [`StructuredOutput`](src/main/java/io/github/weidongxu/agentframework/samples/agents/StructuredOutput.java) | structured-output | `core/chat/ResponseFormat` | ✅ |
+| [`Observability`](src/main/java/io/github/weidongxu/agentframework/samples/agents/Observability.java) | observability | `observability-opentelemetry/*` | ✅ |
+| [`Mcp`](src/main/java/io/github/weidongxu/agentframework/samples/agents/Mcp.java) | mcp | `mcp/McpToolSource` | ✅ |
+| [`Skills`](src/main/java/io/github/weidongxu/agentframework/samples/agents/Skills.java) | skills | `core/skill/*` | ✅ |
+
+Run a sample by its main class:
+
+```powershell
+mvn -q -f samples\02-agents\pom.xml compile ^
+    exec:java -Dexec.mainClass=io.github.weidongxu.agentframework.samples.agents.AgentAsTool
+```
+
+`Mcp` needs an MCP server on the machine (defaults to `uvx mcp-server-git`); `Skills` needs a
+`SKILLS_DIR` of skill folders. Other in-scope concepts (`middleware`, more `context-providers`,
+`chat-client` backends) are exercised by the `app/` workload's `AgentConfiguration`.
 
 **N/A for now** (breadth, see `plan/11`): a2a, devui, declarative, evaluation harness, multimodal.

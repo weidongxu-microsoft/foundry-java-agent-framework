@@ -40,8 +40,18 @@ build** that resolves the framework from the local `~/.m2` (same rule as `app/`/
 ## Status
 
 - ✅ Plan + scaffold: `samples/` tree with `01`–`05` dirs and per-folder READMEs.
-- ✅ First sample: `samples/01-get-started/HelloAgent` — runnable (OpenAI Responses via
-  `OpenAIResponsesChatClient` + `ChatClientAgent`); compiles as an independent build.
-- ⬜ Remaining `01-get-started` steps (tools → multi-turn → memory → workflow → host) and folders `02`–`05`.
+- ✅ **`01-get-started`** (5 runnable classes): `HelloAgent`, `AddTools`, `MultiTurn`, `Memory`,
+  `WorkflowWithAgents`. Host step points to `04-hosting`.
+- ✅ **`02-agents`** (6): `FunctionTools`, `AgentAsTool`, `StructuredOutput`, `Observability`
+  (OpenTelemetry), `Mcp`, `Skills`.
+- ✅ **`03-workflows`** (4): `SequentialSample`, `ConcurrentSample`, `HandoffSample`, `GroupChatSample`.
+- ✅ **`04-hosting`** (Spring Boot): minimal `POST /responses` host (`HostingApplication` +
+  `HostingConfiguration`), OpenAI-backed; `app/` remains the full Foundry/container reference.
+- ✅ **`05-end-to-end`**: `TravelAssistant` — tool + memory + multi-turn in one scenario; `app/`+`client/`
+  is the deployed-over-the-wire reference.
+
+Each category is one independent Maven build with multiple runnable main classes (mirrors MAF's
+numbered files). All compile against the framework from `~/.m2`; model-backed samples are
+compile-verified (not run — no live `OPENAI_API_KEY` was available).
 
 See `plan/11-parity-matrix.md` → *Samples* row for the tracked status.

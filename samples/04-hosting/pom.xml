@@ -5,24 +5,30 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!--
-      Independent build: this sample consumes the framework as installed artifacts (run
-      `mvn install` at the repo root first). It is NOT a module of the framework parent pom,
-      matching the app/client/admin workloads.
+      Independent build: consumes the framework from ~/.m2 (run `mvn install` at the repo root
+      first). A minimal Spring Boot host exposing the Foundry-style POST /responses protocol,
+      backed by an OpenAI agent. The app/ workload is the full Foundry-integrated version.
     -->
     <groupId>io.github.weidongxu.samples</groupId>
-    <artifactId>samples-01-get-started</artifactId>
+    <artifactId>samples-04-hosting</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.1</version>
+        <relativePath/>
+    </parent>
+
     <properties>
-        <maven.compiler.release>21</maven.compiler.release>
+        <java.version>21</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <framework.version>0.1.0-SNAPSHOT</framework.version>
         <openai-java.version>4.14.0</openai-java.version>
     </properties>
 
     <dependencies>
-        <!-- Framework: core abstractions, default agent impl, OpenAI Responses ChatClient. -->
         <dependency>
             <groupId>io.github.weidongxu</groupId>
             <artifactId>agent-framework-core</artifactId>
@@ -38,30 +44,36 @@
             <artifactId>agent-framework-openai</artifactId>
             <version>${framework.version}</version>
         </dependency>
-        <!-- Workflows: multi-agent orchestration (used by WorkflowWithAgents). -->
+        <!-- Spring Responses endpoint + the Foundry response handler (works without live Foundry). -->
         <dependency>
             <groupId>io.github.weidongxu</groupId>
-            <artifactId>agent-framework-workflows</artifactId>
+            <artifactId>agent-framework-agentserver-spring</artifactId>
             <version>${framework.version}</version>
         </dependency>
-        <!-- OpenAI Java SDK: the OpenAI-compatible Responses wire client. -->
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-agentserver-foundry</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
         <dependency>
             <groupId>com.openai</groupId>
             <artifactId>openai-java</artifactId>
             <version>${openai-java.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
+        <finalName>hosting-sample</finalName>
         <plugins>
-            <!-- Run a sample by its main class, e.g.:
-                 mvn -q compile exec:java -Dexec.mainClass=io.github.weidongxu.agentframework.samples.getstarted.HelloAgent -->
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.5.0</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>io.github.weidongxu.agentframework.samples.getstarted.HelloAgent</mainClass>
+                    <mainClass>io.github.weidongxu.agentframework.samples.hosting.HostingApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>

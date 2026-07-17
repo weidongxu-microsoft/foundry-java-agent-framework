@@ -3,16 +3,23 @@
 Progressive tutorial mirroring MAF's `01-get-started/`. Work through in order; each step adds one
 concept on top of the last.
 
-> **Status:** `hello-agent` implemented (runnable); the rest are planned.
+> **Status:** samples 1–5 implemented (runnable); hosting lives in [`../04-hosting/`](../04-hosting/).
 
 | # | Sample | Concept | Framework surface | Status |
 |---|--------|---------|-------------------|--------|
 | 1 | [`HelloAgent`](src/main/java/io/github/weidongxu/agentframework/samples/getstarted/HelloAgent.java) | Create and run your first agent | `core/agent/Agent`, `impl/ChatClientAgent`, `openai/OpenAIResponsesChatClient` | ✅ |
-| 2 | add-tools | Add function tools | `core/tool/FunctionTool` | ⬜ |
-| 3 | multi-turn | Multi-turn conversation | `core/agent/AgentSession` | ⬜ |
-| 4 | memory | Agent memory via a context provider | `AIContextProvider` (e.g. `FileMemoryProvider`) | ⬜ |
-| 5 | workflow-with-agents | Call agents inside a workflow | `framework/workflows` | ⬜ |
-| 6 | host-your-agent | Host the agent (Foundry Responses) | `agentserver-*` | ⬜ |
+| 2 | [`AddTools`](src/main/java/io/github/weidongxu/agentframework/samples/getstarted/AddTools.java) | Add a function tool | `core/tool/FunctionTool` | ✅ |
+| 3 | [`MultiTurn`](src/main/java/io/github/weidongxu/agentframework/samples/getstarted/MultiTurn.java) | Multi-turn conversation | `core/agent/AgentSession` | ✅ |
+| 4 | [`Memory`](src/main/java/io/github/weidongxu/agentframework/samples/getstarted/Memory.java) | Agent memory via a context provider | `harness/FileMemoryProvider` (`AIContextProvider`) | ✅ |
+| 5 | [`WorkflowWithAgents`](src/main/java/io/github/weidongxu/agentframework/samples/getstarted/WorkflowWithAgents.java) | Call agents inside a workflow | `workflows/SequentialWorkflow` | ✅ |
+| 6 | host-your-agent | Host the agent (Foundry Responses) | `agentserver-*` — see [`../04-hosting/`](../04-hosting/) | ➡️ |
+
+Run any sample by its main class:
+
+```powershell
+mvn -q -f samples\01-get-started\pom.xml compile ^
+    exec:java -Dexec.mainClass=io.github.weidongxu.agentframework.samples.getstarted.AddTools
+```
 
 Independent build — resolves the framework from `~/.m2` (run `mvn install` at the repo root first).
 
