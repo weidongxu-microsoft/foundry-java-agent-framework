@@ -319,6 +319,32 @@ final class AgentTests {
         return pass;
     }
 
+    // ----- middleware (framework AgentMiddleware runs in-container) --------------------------
+
+    /**
+     * Verifies the framework {@link io.github.weidongxu.agentframework.middleware.AgentMiddleware}
+     * extension point runs end-to-end. The container wires {@code MarkerMiddleware}, which — on the
+     * opt-in {@code MW_PING} sentinel — mutates the request so the model ends its reply with the
+     * exact token {@code [[mw-ok]]}. That token exists ONLY because the middleware injected the
+     * instruction, so its presence proves the middleware actually executed inside the agent pipeline.
+     */
+    static boolean runMiddlewareTest(OpenAIClient client) {
+        System.out.println();
+        System.out.println("---- middleware ------------------------------------------------");
+        String prompt = "MW_PING Say hello in one short sentence.";
+        JsonNode response = invoke(client, prompt);
+        String answer = answerText(response);
+
+        System.out.println("Q: " + prompt);
+        System.out.println("A: " + answer);
+        boolean marked = answer.contains("[[mw-ok]]");
+        System.out.println("  middleware marker present : " + marked + " ([[mw-ok]])");
+
+        boolean pass = marked;
+        System.out.println("  => " + (pass ? "PASS" : "FAIL"));
+        return pass;
+    }
+
     // ----- git-mcp tool (local MCP server invoked via the framework MCP client) --------------
 
     static boolean runGitMcpToolTest(OpenAIClient client) {

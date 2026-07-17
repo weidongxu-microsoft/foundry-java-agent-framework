@@ -12,6 +12,9 @@ This is a **test/reference workload**, not the framework product.
 - **Todo tool** — in-process `FunctionTool` with per-session scope (`TODO_TOOL_ENABLED`).
 - **Local MCP tools** — optional git demo (`MCP_ENABLED`); see below.
 - **Agent Skills** — optional progressive-disclosure skills (`SKILLS_ENABLED`); see below.
+- **Middleware** — `MarkerMiddleware` (`AgentMiddleware`) wraps every run (`MIDDLEWARE_ENABLED`,
+  default on); inert unless a turn carries the `MW_PING` sentinel, then it marks the reply so the
+  `client` `middleware` scenario can assert the middleware executed in-container.
 
 ## Build & run
 
@@ -37,6 +40,7 @@ for the deploy REST flow. Container env below.
 | `WEB_SEARCH_CONTEXT_SIZE` | `medium` | `LOW`/`MEDIUM`/`HIGH`. |
 | `CODE_INTERPRETER_ENABLED` | `true` | Attach the code interpreter tool. |
 | `TODO_TOOL_ENABLED` | `true` | Attach the in-process todo tool. |
+| `MIDDLEWARE_ENABLED` | `true` | Wrap runs with `MarkerMiddleware` (`AgentMiddleware`); inert unless a turn carries `MW_PING`. |
 | `MEMORY_STORE_NAME` | `memstore-hostagent` | Foundry memory store. |
 | `MEMORY_SCOPE` | `demo-user` | Default memory partition. |
 | `MEMORY_UPDATE_DELAY_SECONDS` | `1` | Memory write debounce. |

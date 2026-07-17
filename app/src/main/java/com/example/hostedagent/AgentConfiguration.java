@@ -220,7 +220,8 @@ public class AgentConfiguration {
             @Value("${AGENT_INSTRUCTIONS:}") String instructions,
             @Value("${WEB_SEARCH_CONTEXT_SIZE:medium}") String searchContextSize,
             @Value("${CODE_INTERPRETER_ENABLED:true}") boolean codeInterpreterEnabled,
-            @Value("${TODO_TOOL_ENABLED:true}") boolean todoToolEnabled) {
+            @Value("${TODO_TOOL_ENABLED:true}") boolean todoToolEnabled,
+            @Value("${MIDDLEWARE_ENABLED:true}") boolean middlewareEnabled) {
         List<Tool> tools = new ArrayList<>();
         tools.add(new HostedWebSearchTool(
                 HostedWebSearchTool.SearchContextSize.valueOf(
@@ -244,6 +245,12 @@ public class AgentConfiguration {
                 .chatOptions(ChatOptions.builder().modelId(model).build())
                 .tools(tools)
                 .aiContextProvider(memoryProvider);
+        // Demonstrate the framework middleware extension point end-to-end: MarkerMiddleware wraps
+        // every run and (only on an opt-in MW_PING sentinel) mutates the request so the reply is
+        // observably marked, letting the client assert middleware actually executed in-container.
+        if (middlewareEnabled) {
+            agentBuilder.middleware(new MarkerMiddleware());
+        }
         // When enabled, add Agent Skills as a second context provider (progressive disclosure).
         AgentSkillsProvider skills = skillsProvider.getIfAvailable();
         if (skills != null) {

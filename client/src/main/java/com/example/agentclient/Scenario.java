@@ -20,6 +20,7 @@ enum Scenario {
     TODO("todo", AgentTests::runTodoToolTest),
     GIT_MCP("git-mcp", AgentTests::runGitMcpToolTest),
     CHANGELOG_SKILL("changelog-skill", AgentTests::runDraftChangelogSkillTest),
+    MIDDLEWARE("middleware", AgentTests::runMiddlewareTest),
     BACKEND_IDENTITY("backend-identity", AgentTests::runBackendIdentityTest);
 
     /** Runs one end-to-end scenario. Allows checked exceptions (some scenarios block on I/O). */

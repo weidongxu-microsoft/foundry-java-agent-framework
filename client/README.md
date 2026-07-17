@@ -57,7 +57,7 @@ mvn -q compile exec:java "-Dexec.args=smoke,web-search"
 ```
 
 Selectable scenarios: `smoke`, `web-search`, `memory`, `code-interpreter`, `multi-turn`,
-`streaming`, `todo`, `git-mcp`, `changelog-skill`, `backend-identity`. An empty selection runs
+`streaming`, `todo`, `git-mcp`, `changelog-skill`, `middleware`, `backend-identity`. An empty selection runs
 them all.
 
 Exit code is `0` only if the selected tests pass.
@@ -65,6 +65,10 @@ Exit code is `0` only if the selected tests pass.
 **`backend-identity` — chat backend identity** asserts the hosted agent stamped
 `metadata.chat_client` on the response. Set `EXPECTED_CHAT_CLIENT=langchain4j` (or `foundry`) to
 also assert the exact backend — verifying the `CHAT_CLIENT` toggle on the app end-to-end.
+
+**`middleware` — framework `AgentMiddleware` runs in-container** sends a turn carrying the
+`MW_PING` sentinel and asserts the reply contains the `[[mw-ok]]` marker. That marker exists only
+because the app's `MarkerMiddleware` injected the instruction, proving the middleware pipeline ran.
 
 ## Expected output
 
