@@ -39,7 +39,9 @@ build** that resolves the framework from the local `~/.m2` (same rule as `app/`/
 
 ## Status
 
-- ✅ Plan + scaffold: `samples/` tree with `01`–`05` dirs and per-folder READMEs (no code yet).
-- ⬜ Author samples per folder (start with `01-get-started`), adding an independent pom each.
+- ✅ Plan + scaffold: `samples/` tree with `01`–`05` dirs and per-folder READMEs.
+- ✅ First sample: `samples/01-get-started/HelloAgent` — runnable (OpenAI Responses via
+  `OpenAIResponsesChatClient` + `ChatClientAgent`); compiles as an independent build.
+- ⬜ Remaining `01-get-started` steps (tools → multi-turn → memory → workflow → host) and folders `02`–`05`.
 
 See `plan/11-parity-matrix.md` → *Samples* row for the tracked status.

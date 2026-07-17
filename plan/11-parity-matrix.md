@@ -133,7 +133,7 @@ MAF ships a progressive, runnable **samples** suite per language (`python/sample
 
 | Feature | .NET | Py | Java | Java location | Notes |
 |---|---|---|---|---|---|
-| Samples suite (`01-get-started` … `05-end-to-end`) | ✅ | ✅ | ⚠️ | `samples/` | Scaffold only: `01`–`05` dirs + READMEs mapped to framework surfaces. Sample code TBD (start with `01-get-started`). Migration guides (AutoGen/SK) N/A — no Java predecessor. |
+| Samples suite (`01-get-started` … `05-end-to-end`) | ✅ | ✅ | ⚠️ | `samples/` | `01`–`05` dirs + READMEs mapped to framework surfaces; `01-get-started/HelloAgent` is runnable (OpenAI Responses). Remaining samples TBD. Migration guides (AutoGen/SK) N/A — no Java predecessor. |
 
 ## Out-of-scope breadth (tracked, not targeted)
 

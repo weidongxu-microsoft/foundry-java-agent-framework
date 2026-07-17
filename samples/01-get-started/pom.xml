@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      Independent build: this sample consumes the framework as installed artifacts (run
+      `mvn install` at the repo root first). It is NOT a module of the framework parent pom,
+      matching the app/client/admin workloads.
+    -->
+    <groupId>io.github.weidongxu.samples</groupId>
+    <artifactId>samples-01-get-started</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <framework.version>0.1.0-SNAPSHOT</framework.version>
+        <openai-java.version>4.14.0</openai-java.version>
+    </properties>
+
+    <dependencies>
+        <!-- Framework: core abstractions, default agent impl, OpenAI Responses ChatClient. -->
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-core</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-core-impl</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-openai</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
+        <!-- OpenAI Java SDK: the OpenAI-compatible Responses wire client. -->
+        <dependency>
+            <groupId>com.openai</groupId>
+            <artifactId>openai-java</artifactId>
+            <version>${openai-java.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Run a sample by its main class, e.g.:
+                 mvn -q compile exec:java -Dexec.mainClass=io.github.weidongxu.agentframework.samples.getstarted.HelloAgent -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>io.github.weidongxu.agentframework.samples.getstarted.HelloAgent</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

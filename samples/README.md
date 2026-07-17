@@ -3,8 +3,9 @@
 Runnable, progressive examples for the **Java Agent Framework** — the Java counterpart to MAF's
 `python/samples/` and `dotnet/samples/`. Structure mirrors MAF's numbered progression.
 
-> **Status:** scaffold only — folders + READMEs are in place; sample code is being added
-> incrementally (start with `01-get-started/`). See [`../plan/16-samples-parity.md`](../plan/16-samples-parity.md).
+> **Status:** scaffold + first sample — folders + READMEs are in place, and `01-get-started/`
+> ships a runnable `HelloAgent`; remaining samples are being added incrementally.
+> See [`../plan/16-samples-parity.md`](../plan/16-samples-parity.md).
 
 ## Structure
 
