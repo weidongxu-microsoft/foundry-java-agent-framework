@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.weidongxu</groupId>
+    <artifactId>foundry-java-hosted-agent-client</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <openai-java.version>4.14.0</openai-java.version>
+        <azure-identity.version>1.18.4</azure-identity.version>
+    </properties>
+
+    <!--
+      Per the Foundry docs, a hosted agent is invoked via "any OpenAI-compatible SDK" against
+      {project_endpoint}/agents/{name}/endpoint/protocols/openai/responses. So the client depends
+      only on the OpenAI Java SDK (the wire client) + azure-identity (for the Entra bearer token).
+      Both are on Maven Central - no azure-ai-agents and no private azure-sdk feed required.
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-core</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-openai</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
+        <!-- OpenAI Java SDK: the OpenAI-compatible Responses client. -->
+        <dependency>
+            <groupId>com.openai</groupId>
+            <artifactId>openai-java</artifactId>
+            <version>${openai-java.version}</version>
+        </dependency>
+        <!-- Microsoft Entra ID token acquisition (DefaultAzureCredential). -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+            <version>${azure-identity.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>agent-demo-client</finalName>
+        <plugins>
+            <!-- Run the demo:
+                 mvn -q compile exec:java -Dexec.mainClass=com.example.agentclient.AgentDemoClient -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>com.example.agentclient.AgentDemoClient</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,12 @@
+# Keep the Docker build context lean. The Dockerfile does `COPY . .` then builds
+# framework/* + app, so DO NOT exclude any Maven sources or poms.
+.git
+.gitignore
+.memory
+**/target
+client
+admin
+scripts
+plan
+*.md
+.agents

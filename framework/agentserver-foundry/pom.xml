@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.weidongxu</groupId>
+        <artifactId>java-agent-framework-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>agent-framework-agentserver-foundry</artifactId>
+
+    <description>
+        Foundry ResponseHandler implementation — the Java counterpart of
+        Microsoft.Agents.AI.Foundry.Hosting. Bridges an Agent to the AgentServer /responses SPI:
+        parses the Responses request body, threads conversation history via a ConversationStore
+        (host-owned; not forwarded upstream), runs the agent, and shapes the buffered/streaming
+        Responses envelope. Web-framework-free (no Spring), so it can run under any host binding.
+    </description>
+
+    <properties>
+        <maven.compiler.release>11</maven.compiler.release>
+        <slf4j.version>2.0.16</slf4j.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-agentserver-responses</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

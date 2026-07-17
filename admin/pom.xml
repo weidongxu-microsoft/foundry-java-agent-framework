@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.weidongxu</groupId>
+    <artifactId>foundry-memory-admin</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <java.version>21</java.version>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <azure-ai-agents.version>2.2.0</azure-ai-agents.version>
+        <azure-identity.version>1.18.4</azure-identity.version>
+        <slf4j.version>2.0.16</slf4j.version>
+    </properties>
+
+    <dependencies>
+        <!-- Foundry agents SDK: the memory-store admin API lives here in Java
+             (BetaMemoryStoresClient). In Python the equivalent is azure-ai-projects. -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-ai-agents</artifactId>
+            <version>${azure-ai-agents.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+            <version>${azure-identity.version}</version>
+        </dependency>
+        <!-- Quiet SLF4J (the Azure SDK logs via SLF4J). -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>memory-admin</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <!-- Run:  mvn -q compile exec:java -Dexec.args="list demo-user" -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>com.example.memadmin.AdminCli</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

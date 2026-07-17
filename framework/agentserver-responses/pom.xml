@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.weidongxu</groupId>
+        <artifactId>java-agent-framework-parent</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>agent-framework-agentserver-responses</artifactId>
+
+    <description>
+        Portable AgentServer /responses protocol layer — the Java counterpart of
+        Azure.AI.AgentServer.Responses. Defines the ResponseHandler SPI, ResponseContext, the
+        Foundry platform contracts (PlatformHeaders, PlatformContext, FoundryEnvironment), and the
+        host-owned ConversationStore. No web-framework dependency, so any host binding
+        (agent-framework-agentserver-spring, or a future WebFlux/Quarkus host) can reuse it.
+    </description>
+
+    <properties>
+        <maven.compiler.release>11</maven.compiler.release>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

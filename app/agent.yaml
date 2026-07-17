@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/microsoft/AgentSchema/refs/heads/main/schemas/v1.0/ContainerAgent.yaml
+#
+# Foundry hosted (container) agent definition. The image is built from ./Dockerfile and pushed to
+# ACR; Foundry pulls it and runs one container per session, forwarding POST /responses to port 8088.
+#
+# FOUNDRY_PROJECT_ENDPOINT and APPLICATIONINSIGHTS_CONNECTION_STRING are auto-injected by the
+# platform at runtime — do NOT declare them here.
+kind: hosted
+name: java-hosted-agent
+description: Java hosted agent on Azure AI Foundry with web search + code interpreter + memory (coded agent — calls the model deployment directly, no backing prompt agent).
+
+protocols:
+  - protocol: responses
+    version: 1.0.0
+
+resources:
+  cpu: "1"
+  memory: 2Gi
+
+# The container is a coded agent: it attaches the Web Search + Code Interpreter tools inline on each
+# Responses call and drives the Foundry memory store directly. Set MODEL to a deployed chat model;
+# MEMORY_STORE_NAME must match the store provisioned by Bootstrap.
+#
+# Memory scope (per-user partitioning): the container reads the platform-injected
+# `x-agent-user-isolation-key` request header as the memory scope — the official mechanism the Agent
+# Framework adapters use to identify the end user. MEMORY_SCOPE is only the fallback when that header
+# is absent (e.g. local dev). A `[memory_scope] value=…` marker line in the input can override the
+# header for trusted-caller / testing scenarios; gate it with ALLOW_MEMORY_SCOPE_OVERRIDE (set to
+# "false" in production so only the platform identity is honored).
+environment_variables:
+  MODEL: gpt-5.4
+  MEMORY_STORE_NAME: memstore-hostagent
+  MEMORY_SCOPE: demo-user
+  # WEB_SEARCH_CONTEXT_SIZE: medium          # optional: low | medium | high
+  # CODE_INTERPRETER_ENABLED: "true"         # optional: set "false" to disable the code interpreter tool
+  # ALLOW_MEMORY_SCOPE_OVERRIDE: "true"      # optional: set "false" so only x-agent-user-isolation-key sets scope

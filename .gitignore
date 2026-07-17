@@ -1,0 +1,22 @@
+# Maven build output
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local memory store (memory skill)
+.memory/
+
+.last_image_tag
