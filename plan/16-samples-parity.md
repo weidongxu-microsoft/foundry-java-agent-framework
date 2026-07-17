@@ -42,7 +42,8 @@ build** that resolves the framework from the local `~/.m2` (same rule as `app/`/
 - ✅ Plan + scaffold: `samples/` tree with `01`–`05` dirs and per-folder READMEs.
 - ✅ **`01-get-started`** (5 runnable classes): `HelloAgent`, `AddTools`, `MultiTurn`, `Memory`,
   `WorkflowWithAgents`. Host step points to `04-hosting`.
-- ✅ **`02-agents`** (6): `FunctionTools`, `AgentAsTool`, `StructuredOutput`, `Observability`
+- ✅ **`02-agents`** (10): `FunctionTools`, `AgentAsTool`, `StructuredOutput`, `Middleware`,
+  `ChatClients` (OpenAI/LangChain4j), `Compaction`, `Conversations`, `Observability`
   (OpenTelemetry), `Mcp`, `Skills`.
 - ✅ **`03-workflows`** (4): `SequentialSample`, `ConcurrentSample`, `HandoffSample`, `GroupChatSample`.
 - ✅ **`04-hosting`** (Spring Boot): minimal `POST /responses` host (`HostingApplication` +
@@ -51,7 +52,7 @@ build** that resolves the framework from the local `~/.m2` (same rule as `app/`/
   is the deployed-over-the-wire reference.
 
 Each category is one independent Maven build with multiple runnable main classes (mirrors MAF's
-numbered files). All compile against the framework from `~/.m2`; model-backed samples are
-compile-verified (not run — no live `OPENAI_API_KEY` was available).
+numbered files); 21 main classes in total. All compile against the framework from `~/.m2`;
+model-backed samples are compile-verified (not run — no live `OPENAI_API_KEY` was available).
 
 See `plan/11-parity-matrix.md` → *Samples* row for the tracked status.

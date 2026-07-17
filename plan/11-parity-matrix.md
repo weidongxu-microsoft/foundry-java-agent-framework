@@ -133,7 +133,7 @@ MAF ships a progressive, runnable **samples** suite per language (`python/sample
 
 | Feature | .NET | Py | Java | Java location | Notes |
 |---|---|---|---|---|---|
-| Samples suite (`01-get-started` … `05-end-to-end`) | ✅ | ✅ | ✅ | `samples/` | All five categories implemented (18 runnable main classes) mapped to framework surfaces; each category is one independent build. Model-backed samples are compile-verified (not run). Migration guides (AutoGen/SK) N/A — no Java predecessor. |
+| Samples suite (`01-get-started` … `05-end-to-end`) | ✅ | ✅ | ✅ | `samples/` | All five categories implemented (21 runnable main classes) mapped to framework surfaces; each category is one independent build. `02-agents` covers tools, agent-as-tool, structured-output, middleware, chat-client backends, compaction, conversations, observability, MCP, skills. Model-backed samples are compile-verified (not run). Migration guides (AutoGen/SK) N/A — no Java predecessor. |
 
 ## Out-of-scope breadth (tracked, not targeted)
 
