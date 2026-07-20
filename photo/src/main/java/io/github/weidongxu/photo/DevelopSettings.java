@@ -31,6 +31,7 @@ public final class DevelopSettings {
     private final Integer highlights;
     private final Integer shadows;
     private final List<double[]> toneCurve;
+    private final Integer maxLongEdgePx;
 
     private DevelopSettings(Builder builder) {
         this.whiteBalanceTempK = builder.whiteBalanceTempK;
@@ -41,6 +42,7 @@ public final class DevelopSettings {
         this.highlights = builder.highlights;
         this.shadows = builder.shadows;
         this.toneCurve = Collections.unmodifiableList(new ArrayList<>(builder.toneCurve));
+        this.maxLongEdgePx = builder.maxLongEdgePx;
     }
 
     /** The baseline develop: no adjustment (all fields unset). */
@@ -100,13 +102,17 @@ public final class DevelopSettings {
                 }
             }
         }
+        if (node.hasNonNull("max_long_edge_px")) {
+            b.maxLongEdgePx(node.get("max_long_edge_px").asInt());
+        }
         return b.build();
     }
 
     /** @return {@code true} when nothing is set — the baseline develop. */
     public boolean isNeutral() {
         return whiteBalanceTempK == null && tint == null && exposureEv == null && contrast == null
-                && saturation == null && highlights == null && shadows == null && toneCurve.isEmpty();
+                && saturation == null && highlights == null && shadows == null && toneCurve.isEmpty()
+                && maxLongEdgePx == null;
     }
 
     public Integer getWhiteBalanceTempK() {
@@ -142,6 +148,15 @@ public final class DevelopSettings {
         return toneCurve;
     }
 
+    /**
+     * The maximum output long-edge (larger of width/height) in pixels; the image is downscaled to
+     * fit, preserving aspect ratio (never upscaled). {@code null} keeps full sensor resolution. A
+     * value around 1024 is enough for the model's advice step and for a quick preview.
+     */
+    public Integer getMaxLongEdgePx() {
+        return maxLongEdgePx;
+    }
+
     public static final class Builder {
         private Integer whiteBalanceTempK;
         private Double tint;
@@ -151,6 +166,7 @@ public final class DevelopSettings {
         private Integer highlights;
         private Integer shadows;
         private final List<double[]> toneCurve = new ArrayList<>();
+        private Integer maxLongEdgePx;
 
         public Builder whiteBalanceTempK(Integer kelvin) {
             this.whiteBalanceTempK = kelvin;
@@ -189,6 +205,14 @@ public final class DevelopSettings {
 
         public Builder addToneCurvePoint(double x, double y) {
             this.toneCurve.add(new double[] {x, y});
+            return this;
+        }
+
+        public Builder maxLongEdgePx(Integer maxLongEdgePx) {
+            if (maxLongEdgePx != null && maxLongEdgePx < 1) {
+                throw new IllegalArgumentException("maxLongEdgePx must be >= 1");
+            }
+            this.maxLongEdgePx = maxLongEdgePx;
             return this;
         }
 

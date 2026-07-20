@@ -69,6 +69,19 @@ public final class Pp3Writer {
                 sb.append("Shadows=").append(settings.getShadows()).append('\n');
             }
         }
+
+        if (settings.getMaxLongEdgePx() != null) {
+            int edge = settings.getMaxLongEdgePx();
+            sb.append("\n[Resize]\n");
+            sb.append("Enabled=true\n");
+            sb.append("AppliesTo=Cropped area\n");
+            sb.append("Method=Lanczos\n");
+            sb.append("DataSpecified=3\n");
+            sb.append("Width=").append(edge).append('\n');
+            sb.append("Height=").append(edge).append('\n');
+            sb.append("LongEdge=").append(edge).append('\n');
+            sb.append("AllowUpscaling=false\n");
+        }
         return sb.toString();
     }
 

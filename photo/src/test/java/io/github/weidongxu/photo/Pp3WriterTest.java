@@ -3,6 +3,7 @@ package io.github.weidongxu.photo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -81,5 +82,20 @@ class Pp3WriterTest {
     void emptyJsonIsNeutral() throws Exception {
         assertTrue(DevelopSettings.fromJson("", new ObjectMapper()).isNeutral());
         assertTrue(DevelopSettings.fromJson("{}", new ObjectMapper()).isNeutral());
+    }
+
+    @Test
+    void resizeOnlyProducesResizeProfile() throws Exception {
+        DevelopSettings settings = DevelopSettings.builder().maxLongEdgePx(1024).build();
+
+        assertFalse(settings.isNeutral());
+        String pp3 = Pp3Writer.toPp3(settings);
+        assertTrue(pp3.contains("[Resize]"));
+        assertTrue(pp3.contains("Enabled=true"));
+        assertTrue(pp3.contains("LongEdge=1024"));
+        assertFalse(pp3.contains("[White Balance]"));
+
+        DevelopSettings parsed = DevelopSettings.fromJson("{\"max_long_edge_px\":1024}", new ObjectMapper());
+        assertEquals(Integer.valueOf(1024), parsed.getMaxLongEdgePx());
     }
 }

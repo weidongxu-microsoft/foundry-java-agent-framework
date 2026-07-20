@@ -9,8 +9,8 @@ No pure-Java RAW decoder handles modern cameras, so imaging is done by the nativ
 ## API
 
 - `DevelopSettings` — editor-neutral params (WB temp, tint, exposure EV, contrast, saturation,
-  highlight/shadow recovery, tone curve). `neutral()` = baseline; `fromJson(...)` parses the vision
-  step's JSON.
+  highlight/shadow recovery, tone curve, and `maxLongEdgePx` output downscale). `neutral()` =
+  baseline; `fromJson(...)` parses the vision step's JSON.
 - `Pp3Writer.toPp3(settings)` — settings → RawTherapee 5.12 `pp3` (null when neutral).
 - `RawDeveloper` / `RawTherapeeDeveloper(RawTherapeeOptions)` — `develop(raw, settings, outJpeg)`.
 
