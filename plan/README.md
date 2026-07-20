@@ -22,6 +22,7 @@ index below. Keep entries concise (see `AGENTS.md` → *Writing docs*).
 | [17-framework-pitch-ppt.md](17-framework-pitch-ppt.md) | **Pitch-deck outline** (~12 slides) on the framework's advantages vs. the hand-rolled `foundry-java-hosted-agent/app/` baseline (~2,482 LoC → config). Slides, baseline facts, demo/backup. |
 | [18-framework-pitch-deck.md](18-framework-pitch-deck.md) | **Generatable Marp deck source** (edit-then-`marp-cli`→pptx/pdf) built from doc 17: 13 slides + speaker notes. |
 | [19-raw-photo-tool.md](19-raw-photo-tool.md) | Feasibility + design for a **RAW-photo** workload (replace demo `TodoTool`): develop camera RAW → adjusted JPEG with gpt-5.4 vision. Needs the multimodal content gap closed; native RAW developer (rawtherapee-cli) via `ProcessBuilder`. |
+| [20-raw-photo-framework-integration.md](20-raw-photo-framework-integration.md) | **Framework-integration view** of the RAW-photo feature: how middleware short-circuit, `DataContent` multimodal I/O, the `ChatClient` vision sub-call, and agent hosting reduce it to ~one middleware + one lib. |
 
 > **Maintaining this index:** add a row for every new `plan/NN-topic.md`. See `AGENTS.md`
 > → *Design docs* for the naming + parity-ledger conventions.
