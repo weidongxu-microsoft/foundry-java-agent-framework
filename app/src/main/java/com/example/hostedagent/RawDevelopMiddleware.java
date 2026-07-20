@@ -297,6 +297,8 @@ final class RawDevelopMiddleware implements AgentMiddleware {
             ObjectNode adjustments = (adjNode instanceof ObjectNode) ? (ObjectNode) adjNode : object;
             // The final resolution is app-controlled, never model-dictated.
             adjustments.remove("max_long_edge_px");
+            // The model works on sliders only; ignore any stray tone curve it emits.
+            adjustments.remove("tone_curve");
             return new AdviceResult(
                     DevelopSettings.fromJsonNode(adjustments),
                     adjustments.toString(),

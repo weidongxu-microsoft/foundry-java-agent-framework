@@ -171,6 +171,14 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
         bidirectional). Live e2e (v19): the twilight woodland and the night concert both **held the
         dark mass** — small `shadows` (10 / 8), a lowered tone-curve toe `[0.25,0.18]`, and critiques
         that explicitly kept the shadows dark.
+     4. **Curve removed from the model's toolkit (v20).** The v19 tone-curve toe darkened the *whole*
+        lower half (everything below the ~0.5 crossover), pulling the *subject* down too (e.g. a
+        concert singer sitting in the low-mids). Fix: the prompt no longer asks for a `tone_curve` —
+        the model works on **sliders only** and gets those right first; `adviseSettings()` also
+        defensively strips any stray `tone_curve` (`DevelopSettings` still supports it — just not
+        model-driven). Result (v20, viewed): the concert singer is lifted out of the dark via
+        `shadows` **recovery** (tone-selective, rolls off before true black) while the room stays
+        black — exactly what the blunt global toe could not do.
 5. **Auto lens correction (item #4)** — **implemented & verified live (v14)**. `DevelopSettings`
    gains a `lensCorrection` flag → `Pp3Writer` emits `[LensProfile] LcMode=lfauto` (distortion +
    vignetting, `UseCA=false`). App-controlled via `PHOTO_LENS_CORRECTION` (default **true**), applied
