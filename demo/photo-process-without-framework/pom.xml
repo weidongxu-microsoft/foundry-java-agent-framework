@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      WITHOUT the framework: the SAME Foundry hosted agent (AI decides how to process a photo
+      for maximum impact, current step = crop; plus a chat flow with durable memory), but the
+      entire /responses wire contract is hand-rolled in PhotoProcessController. No framework and
+      no openai-java — the model call is raw java.net.http. The only SDK is azure-ai-agents, used
+      by the hand-written MemoryService (there is no reasonable way to hand-roll the managed memory
+      store); compare its ~340 lines with the framework project's one-line FoundryMemoryProvider.
+      Compare LOC/structure with ../photo-process-with-framework.
+    -->
+    <groupId>io.github.weidongxu.demo</groupId>
+    <artifactId>photo-process-without-framework</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.1</version>
+        <relativePath/>
+    </parent>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <azure-ai-agents.version>2.1.0</azure-ai-agents.version>
+        <azure-identity.version>1.18.1</azure-identity.version>
+    </properties>
+
+    <dependencies>
+        <!-- Web only. Everything else (SSE framing, model call, JSON shaping) is hand-written. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!--
+          Durable memory: NO framework memory provider exists here, so the memory orchestration
+          (recall-before / store-after, scoping, gating) is hand-written in MemoryService against
+          the raw Foundry memory SDK. Compare with the framework project's one-line
+          FoundryMemoryProvider attach.
+        -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-ai-agents</artifactId>
+            <version>${azure-ai-agents.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+            <version>${azure-identity.version}</version>
+        </dependency>
+    </dependencies>
+
+    <!-- azure-ai-agents ships on the azure-sdk feed, not Maven Central. -->
+    <repositories>
+        <repository>
+            <id>azure-sdk-for-java</id>
+            <url>https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-java/maven/v1</url>
+        </repository>
+    </repositories>
+
+    <build>
+        <finalName>photo-process-without-framework</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>demo.photoprocess.withoutframework.PhotoProcessAgentApplication</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

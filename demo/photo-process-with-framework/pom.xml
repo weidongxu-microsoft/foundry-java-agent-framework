@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      WITH the framework: a Foundry hosted agent that crops a photo for maximum impact.
+      Independent build — run `mvn install` at the repo root first to publish the framework
+      artifacts to the local repo. Compare LOC/structure with ../photo-process-without-framework.
+    -->
+    <groupId>io.github.weidongxu.demo</groupId>
+    <artifactId>photo-process-with-framework</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.1</version>
+        <relativePath/>
+    </parent>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <framework.version>0.1.0-SNAPSHOT</framework.version>
+        <openai-java.version>4.14.0</openai-java.version>
+    </properties>
+
+    <dependencies>
+        <!-- Framework: core + default impl + OpenAI Responses ChatClient + the agent server. -->
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-core</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-core-impl</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-openai</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-agentserver-spring</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-agentserver-foundry</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
+        <!-- Foundry provider: FoundryMemoryProvider + client factory (pulls azure-ai-agents). -->
+        <dependency>
+            <groupId>io.github.weidongxu</groupId>
+            <artifactId>agent-framework-foundry</artifactId>
+            <version>${framework.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.openai</groupId>
+            <artifactId>openai-java</artifactId>
+            <version>${openai-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>photo-process-with-framework</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>demo.photoprocess.withframework.PhotoProcessAgentApplication</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- azure-ai-agents (transitive via agent-framework-foundry) ships on the azure-sdk feed. -->
+    <repositories>
+        <repository>
+            <id>azure-sdk-for-java</id>
+            <url>https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-java/maven/v1</url>
+        </repository>
+    </repositories>
+</project>
