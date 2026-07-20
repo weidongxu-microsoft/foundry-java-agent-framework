@@ -10,6 +10,26 @@ hosted/client split**, plus a server side for running an agent as a Foundry **ho
 > locally (see below). Group id `io.github.weidongxu`, base package
 > `io.github.weidongxu.agentframework`. Framework core targets **Java 11**.
 
+## ⚠️ Most important deploy gotcha: Java must trust the Foundry egress-proxy CA
+
+**Any Java hosted agent running in a Foundry sandbox must add the platform's egress-proxy CA to the
+JVM truststore at container startup — or every outbound HTTPS call fails.** This is the single
+biggest difference from MAF's .NET/Python and the first thing to get right when deploying.
+
+- **Why (Java-only):** the Foundry sandbox routes outbound HTTPS through an egress proxy that
+  **terminates TLS with a platform CA not in the JVM `cacerts`**. The **JVM ships its own `cacerts`
+  and ignores the OS trust store** (`/etc/ssl/certs`) — so calls to the project endpoint fail with
+  `SSLHandshakeException` / **PKIX path building failed**. .NET and Python do **not** hit this: their
+  TLS stacks read the OS store (where the platform installed the CA), so they trust it with no code.
+  There is no MAF feature to mirror here — it is purely a JVM trust-source gap.
+- **Fix:** at container start, import the CA the platform exposes via `NODE_EXTRA_CA_CERTS`
+  (e.g. `/etc/ssl/certs/adc-egress-proxy-ca.crt`) into a **writable copy** of `cacerts` and launch
+  with `-Djavax.net.ssl.trustStore=...`. Importing just that one cert (not all ~140 system CAs) keeps
+  startup fast so the readiness probe passes. Reference implementation: **[`app/entrypoint.sh`](app/entrypoint.sh)**.
+- **Roadmap:** this is currently solved in the **workload** (`app/`), not the framework — a candidate
+  to pull into the framework's hosting/runtime layer (a startup truststore-augmentation) so workloads
+  need zero TLS plumbing. See [`plan/09-framework-lessons.md`](plan/09-framework-lessons.md).
+
 ## Framework modules (`framework/`) — the product
 
 | Module | Purpose |

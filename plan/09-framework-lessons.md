@@ -64,7 +64,21 @@ set) reimplementing/duplicating salience policy on the client. That's the wrong 
   as the sole guard. The client-side filter hooks remain available for workloads that want a
   belt-and-suspenders layer, but the demo app deliberately skips them to show the framework carrying
   the weight.
-- **Client seam note:** Java added a `FoundryMemoryClient` interface + `SdkFoundryMemoryClient` impl
-  that .NET/Python lack (they call the SDK project client directly). Keep it — it makes the provider
-  unit-testable with a fake — but hide it behind `FoundryClientFactory.createMemoryClient(...)` so the
-  workload never names the `azure-ai-agents` SDK type, matching the other-language app surface.
+## 6. Java-only: trust the Foundry **egress-proxy CA** or all outbound HTTPS fails
+
+The **biggest** hosted-agent deploy gotcha, and unique to the JVM. The Foundry sandbox routes
+outbound HTTPS through an egress proxy that **terminates TLS with a platform CA not in the JVM
+`cacerts`**. The **JVM ships its own `cacerts` and ignores the OS trust store** (`/etc/ssl/certs`),
+so calls to the project endpoint fail with `SSLHandshakeException` / **PKIX path building failed**.
+
+- **Why only Java:** .NET (OpenSSL → OS store) and Python trust the CA via the **OS trust store**
+  where the platform installed it; the JVM is the odd one out. There is **no MAF code** to mirror —
+  it's a runtime trust-source difference, not a framework feature.
+- **Fix (workload today):** at container start, import the CA the platform exposes via
+  `NODE_EXTRA_CA_CERTS` (observed `/etc/ssl/certs/adc-egress-proxy-ca.crt`) into a **writable copy**
+  of `cacerts`, then launch with `-Djavax.net.ssl.trustStore=...`. Import **only that one cert** (not
+  all ~140 system CAs) so startup stays fast and the readiness probe passes. See `app/entrypoint.sh`.
+- **Backlog:** pull this into the framework's hosting/runtime layer (a startup truststore
+  augmentation that reads `NODE_EXTRA_CA_CERTS` / the OS store and installs a merged default
+  `SSLContext` **before** any TLS client is built) so workloads need zero TLS plumbing. Caveat:
+  confirm the Azure SDK HTTP pipeline honors the default `SSLContext` (or expose a hook).
