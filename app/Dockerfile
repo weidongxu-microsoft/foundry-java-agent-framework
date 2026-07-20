@@ -8,6 +8,7 @@ WORKDIR /workspace
 COPY . .
 RUN mvn -q -B -pl framework/core-impl,framework/openai,framework/foundry,framework/agentserver-spring,framework/agentserver-foundry,framework/mcp,framework/langchain4j \
         -am -DskipTests install \
+    && mvn -q -B -f photo/pom.xml -DskipTests install \
     && mvn -q -B -f app/pom.xml -DskipTests package
 
 FROM eclipse-temurin:21-jre
@@ -20,6 +21,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 # uv provides `uvx`; pre-install the git MCP server so it runs without runtime network access.
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+# NOTE: the raw-photo develop feature (plan/19) shells out to `rawtherapee-cli`. When that feature
+# is wired into the agent, add it to the runtime image, e.g.:
+#   apt-get install -y --no-install-recommends rawtherapee    # provides rawtherapee-cli
+# It is intentionally omitted until then to keep the image lean (the lib is on the classpath but
+# unused, so nothing invokes the binary yet).
 ENV PATH="/root/.local/bin:${PATH}"
 RUN uv tool install mcp-server-git
 # Synthetic repo the git MCP demo reads. Its commits carry a unique marker (ZTOKEN-9f3a1c) that

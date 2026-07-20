@@ -76,13 +76,40 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
   blob/SAS URL the container downloads, but container egress is proxied — verify reachability.
 - **Compute/latency:** RAW development is CPU/RAM heavy → size the container; seconds per develop.
 
-## Phased plan (no code yet)
+## Phased plan
 
-1. **Native develop spike** — Java `ProcessBuilder` → rawtherapee-cli + `pp3`; proves steps 2 & 4
-   offline.
+1. **Native develop spike** — ✅ **Done** (`photo/` lib). Java `ProcessBuilder` → `rawtherapee-cli`
+   + generated `pp3`; baseline + adjusted develop proven locally (see below).
 2. **Multimodal-in** — `DataContent`/`UriContent` in core; `contentText`/`mapMessage` accept
    `input_image`/`input_file`.
 3. **Vision advice** — sub-call sends baseline JPEG, returns JSON params (structured output).
 4. **Multimodal-out** — image content or URL; wire the app pipeline; retire `TodoTool`.
 
-Also update `Dockerfile` (add rawtherapee + exiftool) and confirm container sizing.
+Also update `Dockerfile` (install rawtherapee at runtime + optional exiftool) and confirm container
+sizing.
+
+## `photo/` lib (phase 1, done)
+
+Standalone Maven module `io.github.weidongxu:raw-photo` (independent build, Java 17); `app` depends
+on it as a binary artifact (matches the app/client/admin workload convention). The Dockerfile build
+stage installs it before packaging `app`; runtime `rawtherapee-cli` is deferred until the feature is
+wired (commented in the Dockerfile).
+
+- `DevelopSettings` (+ builder + `fromJson`) — editor-neutral params: WB temp, tint, exposure EV,
+  contrast, saturation, highlight/shadow recovery, tone-curve points. `neutral()` = baseline;
+  `fromJson` maps the vision step's JSON.
+- `Pp3Writer` — renders settings → RawTherapee 5.12 `pp3` (WB → `[White Balance]`,
+  exposure/contrast/saturation/curve → `[Exposure]`, highlight/shadow → `[Shadows & Highlights]`).
+  Neutral → no profile (baseline needs no `-p`).
+- `RawDeveloper` / `RawTherapeeDeveloper` (+ `RawTherapeeOptions`) — invokes
+  `rawtherapee-cli -o <out> [-p <pp3>] -j<q> -Y -c <in>` via `ProcessBuilder`; CLI path from
+  `RAWTHERAPEE_CLI` env or PATH; succeeds only on exit 0 + non-empty output.
+
+### Local evaluation (verified)
+
+- CLI: RawTherapee 5.12 `rawtherapee-cli.exe`; sample: Fujifilm `.RAF` (~24MB).
+- `Pp3WriterTest` (5 unit tests) — always runs, no native dep.
+- `RawTherapeeDeveloperIT` — gated on `RAWTHERAPEE_CLI` + `RAW_SAMPLE` env; **passed**: baseline
+  (neutral) + adjusted (WB 4800K / tint / exposure / contrast / S&H / curve) both produced valid,
+  distinct JPEGs. ~3.6s baseline, ~4.2s adjusted. Confirms RAF decode + full adjustment pipeline
+  (WB, tint, highlights, shadows, tone curve) works from Java.
