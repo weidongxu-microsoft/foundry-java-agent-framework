@@ -8,6 +8,7 @@ import io.github.weidongxu.agentframework.chat.ChatRole;
 import io.github.weidongxu.agentframework.chat.FinishReason;
 import io.github.weidongxu.agentframework.chat.FunctionCallContent;
 import io.github.weidongxu.agentframework.chat.FunctionResultContent;
+import io.github.weidongxu.agentframework.chat.DataContent;
 import com.openai.core.ObjectMappers;
 import com.openai.core.http.StreamResponse;
 import com.openai.models.responses.Response;
@@ -56,6 +57,41 @@ class OpenAIResponsesChatClientTest {
                 Arrays.asList(ChatMessage.user("hello")), options);
 
         assertTrue(params._additionalHeaders().values("x-agent-foundry-call-id").isEmpty());
+    }
+
+    @Test
+    void mapsImageDataContentToInputImage() {
+        ChatMessage message = ChatMessage.builder(ChatRole.USER)
+                .text("what adjustments does this photo need?")
+                .addContent(new DataContent(new byte[] {1, 2, 3, 4}, "image/jpeg", "preview.jpg"))
+                .build();
+
+        ResponseCreateParams params = OpenAIResponsesChatClient.createParams(
+                List.of(message), ChatOptions.builder().modelId("gpt-test").build());
+
+        List<ResponseInputItem> input = params.input().orElseThrow().asResponse();
+        assertTrue(input.get(0).isEasyInputMessage());
+        var content = input.get(0).asEasyInputMessage().content();
+        assertTrue(content.isResponseInputMessageContentList());
+        var parts = content.asResponseInputMessageContentList();
+        assertTrue(parts.stream().anyMatch(p -> p.isInputText()));
+        var image = parts.stream().filter(p -> p.isInputImage()).findFirst().orElseThrow();
+        assertTrue(image.asInputImage().imageUrl().orElse("").startsWith("data:image/jpeg;base64,"));
+    }
+
+    @Test
+    void skipsNonImageDataContent() {
+        ChatMessage message = ChatMessage.builder(ChatRole.USER)
+                .text("develop this")
+                .addContent(new DataContent(new byte[] {9, 9}, "image/x-fuji-raf", "shot.raf"))
+                .build();
+
+        ResponseCreateParams params = OpenAIResponsesChatClient.createParams(
+                List.of(message), ChatOptions.builder().modelId("gpt-test").build());
+
+        List<ResponseInputItem> input = params.input().orElseThrow().asResponse();
+        // A camera RAW is not sent upstream: the message stays plain text.
+        assertEquals("develop this", input.get(0).asEasyInputMessage().content().asTextInput());
     }
 
     @Test

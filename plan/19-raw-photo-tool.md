@@ -91,8 +91,31 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
    inside `output_text` — the gateway-safe delivery. It **short-circuits the model** (buffered +
    streaming). Wired in `AgentConfiguration` (default on, `PHOTO_ENABLED`); `TodoTool` retired
    (default off). Dockerfile runtime installs `rawtherapee`.
-4. **Vision advice (item #2/#3)** — TODO. Sub-call sends the neutral JPEG (≤1024px long edge is
-   enough), returns `DevelopSettings` JSON, re-develop adjusted. Builds on the same middleware seam.
+4. **Vision advice (item #2/#3)** — **designed, in progress**. Same middleware seam; when a RAW is
+   attached and `PHOTO_ADVICE_ENABLED` (default on):
+   1. Develop a **small neutral JPEG** at `PHOTO_ADVICE_LONG_EDGE_PX` (default 1024) — cheap for the
+      model to look at.
+   2. **Vision sub-call:** build a user `ChatMessage` = `[TextContent(advice prompt),
+      DataContent(small JPEG, image/jpeg)]` and call the injected framework `ChatClient`
+      (`getResponse`) with `ChatOptions(modelId=MODEL, responseFormat=JSON_OBJECT)`. The model
+      returns adjustment values as JSON (keys match `DevelopSettings.fromJson`:
+      `white_balance_temp_k`, `tint`, `exposure_ev`, `contrast`, `saturation`, `highlights`,
+      `shadows`, `tone_curve`).
+   3. Parse → `DevelopSettings` (strip ``` fences; unknown/missing keys ignored). **Force**
+      `max_long_edge_px = PHOTO_MAX_LONG_EDGE_PX` (output size), ignoring any model-supplied resize.
+   4. **Re-develop the RAW** with the adjusted settings at output size → final JPEG.
+   5. Return the final JPEG as a `data:` URL + a note summarising the applied adjustments.
+   - **Fallbacks (never fail the turn):** advice disabled, or the vision call / JSON parse fails →
+     fall back to the neutral item-#1 JPEG.
+   - **Framework change:** `OpenAIResponsesChatClient.mapMessage` maps an **image** `DataContent`
+     (`image/*`) → an `EasyInputMessage` content list with an `input_image` data URL so the model can
+     see it (closes parity gap #7 for the foundry client). Non-image `DataContent` (a RAW) is still
+     skipped — the RAW bytes never go upstream.
+   - **Backend decision:** the vision sub-call runs through the **foundry** `ChatClient`
+     (`OpenAIResponsesChatClient`), so the deploy switches to **`CHAT_CLIENT=foundry`**. The
+     langchain4j adapter is a demo and intentionally does **not** get vision-in support.
+   - **Config:** `PHOTO_ADVICE_ENABLED` (default true), `PHOTO_ADVICE_LONG_EDGE_PX` (default 1024);
+     reuses `MODEL` for the vision call.
 
 Deploy: re-enable the Foundry agent, `az acr build` the image, verify item #1 end-to-end. Watch the
 inbound request size — a full RAW as base64 `input_file` (~32MB) may hit the gateway limit; use a

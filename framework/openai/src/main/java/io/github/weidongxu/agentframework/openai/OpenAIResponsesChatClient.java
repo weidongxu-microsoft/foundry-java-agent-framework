@@ -35,6 +35,9 @@ import com.openai.models.responses.Response;
 import com.openai.models.responses.ResponseCreateParams;
 import com.openai.models.responses.ResponseFunctionToolCall;
 import com.openai.models.responses.ResponseInputItem;
+import com.openai.models.responses.ResponseInputContent;
+import com.openai.models.responses.ResponseInputImage;
+import com.openai.models.responses.ResponseInputText;
 import com.openai.models.responses.ResponseOutputItem;
 import com.openai.models.responses.ResponseOutputMessage;
 import com.openai.models.responses.ResponseStreamEvent;
@@ -159,6 +162,7 @@ public final class OpenAIResponsesChatClient implements ChatClient {
     private static void mapMessage(ChatMessage message, List<ResponseInputItem> input) {
         Objects.requireNonNull(message, "message");
         StringBuilder text = new StringBuilder();
+        List<DataContent> images = new java.util.ArrayList<>();
         for (ChatContent content : message.getContents()) {
             if (content instanceof TextContent) {
                 text.append(((TextContent) content).getText());
@@ -178,23 +182,54 @@ public final class OpenAIResponsesChatClient implements ChatClient {
                                 .output(result.getResult())
                                 .build()));
             } else if (content instanceof DataContent) {
-                // A text-only Responses model cannot consume binary attachments (e.g. a camera RAW);
-                // skip them here. A host pipeline that understands the bytes handles them out-of-band,
-                // and a text breadcrumb naming the attachment is injected upstream so the model still
-                // knows one is present.
-                continue;
+                DataContent data = (DataContent) content;
+                if (isVisionImage(data.getMediaType())) {
+                    // A vision-capable model can consume a web image; forward it as an input_image
+                    // data URL. Camera RAW (image/x-*-raf, etc.) is intentionally excluded below.
+                    images.add(data);
+                }
+                // Non-displayable binary (e.g. a camera RAW) is skipped: a text-only model cannot
+                // consume it, a host pipeline handles the bytes out-of-band, and a text breadcrumb
+                // naming the attachment is injected upstream so the model still knows one is present.
             } else {
                 throw new IllegalArgumentException(
                         "Unsupported OpenAI chat content: " + content.getClass().getName());
             }
         }
-        if (text.length() > 0) {
+        if (!images.isEmpty()) {
+            List<ResponseInputContent> parts = new java.util.ArrayList<>();
+            if (text.length() > 0) {
+                parts.add(ResponseInputContent.ofInputText(
+                        ResponseInputText.builder().text(text.toString()).build()));
+            }
+            for (DataContent image : images) {
+                parts.add(ResponseInputContent.ofInputImage(
+                        ResponseInputImage.builder()
+                                .imageUrl(image.toDataUri())
+                                .detail(ResponseInputImage.Detail.AUTO)
+                                .build()));
+            }
+            input.add(ResponseInputItem.ofEasyInputMessage(
+                    EasyInputMessage.builder()
+                            .role(mapRole(message.getRole()))
+                            .contentOfResponseInputMessageContentList(parts)
+                            .build()));
+        } else if (text.length() > 0) {
             input.add(ResponseInputItem.ofEasyInputMessage(
                     EasyInputMessage.builder()
                             .role(mapRole(message.getRole()))
                             .content(text.toString())
                             .build()));
         }
+    }
+
+    private static final java.util.Set<String> VISION_IMAGE_TYPES = java.util.Set.of(
+            "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp");
+
+    /** @return {@code true} for a web image a vision model can render; excludes camera RAW. */
+    private static boolean isVisionImage(String mediaType) {
+        return mediaType != null
+                && VISION_IMAGE_TYPES.contains(mediaType.toLowerCase(java.util.Locale.ROOT).trim());
     }
 
     private static EasyInputMessage.Role mapRole(ChatRole role) {

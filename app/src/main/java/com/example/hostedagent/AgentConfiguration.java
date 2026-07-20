@@ -83,8 +83,8 @@ public class AgentConfiguration {
                     + "events or facts you are unsure of, and cite sources. Use the code interpreter "
                     + "tool to run Python for precise calculations, data analysis, or generating files. "
                     + "When the user attaches a camera RAW photo, it is developed to a JPEG for them "
-                    + "automatically. Use the memories provided below to personalize your answers when "
-                    + "relevant.";
+                    + "automatically, with AI-suggested adjustments applied. Use the memories provided "
+                    + "below to personalize your answers when relevant.";
 
     @Bean
     public FoundryClientFactory foundryClientFactory() {
@@ -228,6 +228,7 @@ public class AgentConfiguration {
             FoundryMemoryProvider memoryProvider,
             TodoTool todoTool,
             RawDeveloper rawDeveloper,
+            ObjectMapper objectMapper,
             ExecutorService agentExecutor,
             ObjectProvider<McpToolSource> mcpToolSource,
             ObjectProvider<AgentSkillsProvider> skillsProvider,
@@ -238,6 +239,8 @@ public class AgentConfiguration {
             @Value("${TODO_TOOL_ENABLED:false}") boolean todoToolEnabled,
             @Value("${PHOTO_ENABLED:true}") boolean photoEnabled,
             @Value("${PHOTO_MAX_LONG_EDGE_PX:2048}") int photoMaxLongEdgePx,
+            @Value("${PHOTO_ADVICE_ENABLED:true}") boolean photoAdviceEnabled,
+            @Value("${PHOTO_ADVICE_LONG_EDGE_PX:1024}") int photoAdviceLongEdgePx,
             @Value("${MIDDLEWARE_ENABLED:true}") boolean middlewareEnabled) {
         List<Tool> tools = new ArrayList<>();
         tools.add(new HostedWebSearchTool(
@@ -268,12 +271,20 @@ public class AgentConfiguration {
         if (middlewareEnabled) {
             agentBuilder.middleware(new MarkerMiddleware());
         }
-        // The app-owned RAW-photo pipeline: when a user attaches a camera RAW, develop it to a JPEG
-        // and return it directly, short-circuiting the model. Replaces the demo TodoTool as the
-        // workload's "real" capability.
+        // The app-owned RAW-photo pipeline: when a user attaches a camera RAW, develop it to a JPEG.
+        // With advice enabled, a small neutral preview is shown to the vision model, which returns
+        // adjustment values, and the RAW is re-developed adjusted; otherwise a neutral JPEG is
+        // returned (item #1). Either way it short-circuits the model. Replaces the demo TodoTool.
         if (photoEnabled) {
             agentBuilder.middleware(new RawDevelopMiddleware(
-                    rawDeveloper, photoMaxLongEdgePx > 0 ? photoMaxLongEdgePx : null, agentExecutor));
+                    rawDeveloper,
+                    photoMaxLongEdgePx > 0 ? photoMaxLongEdgePx : null,
+                    agentExecutor,
+                    chatClient,
+                    objectMapper,
+                    model,
+                    photoAdviceEnabled,
+                    photoAdviceLongEdgePx > 0 ? photoAdviceLongEdgePx : null));
         }
         // When enabled, add Agent Skills as a second context provider (progressive disclosure).
         AgentSkillsProvider skills = skillsProvider.getIfAvailable();
