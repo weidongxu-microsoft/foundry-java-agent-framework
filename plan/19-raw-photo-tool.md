@@ -154,6 +154,23 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
         driven edits — e.g. a concert frame drew cool 3600K + **negative** saturation ("reds already
         intense") and gentle contrast; a twilight woodland drew **negative** contrast + a large shadow
         lift to open collapsed shadows.
+   - **Moody-shadow doctrine + engine-accurate params + prompt extracted (item #9) — verified live
+     (v19).** The v18 prompt was lifting shadows on scenes that should stay dark. Fixes:
+     1. **Prompt moved out of Java** into `app/src/main/resources/photo/advice-system.txt` +
+        `advice-user.txt`, loaded at class-init via a `loadResource()` classpath helper — reviewable
+        without touching code.
+     2. **Shadow/mood doctrine.** The prompt now tells the model to **hold shadows dark** for
+        moody/twilight/night scenes and only lift where *unintentionally lost subject detail* needs
+        it — not to brighten the whole shadow mass.
+     3. **Engine-accurate parameter behavior** (RawTherapee, stated so the model reasons correctly):
+        `shadows`/`highlights` are **0..100 recovery-only** (a *lift* — negative is a no-op), so to
+        **darken/deepen** shadows the model must use the **tone-curve toe** (a lower-left point with
+        `y<x`) and/or **negative `exposure_ev`**. `contrast`/`saturation` remain bidirectional
+        (-100..100). Empirically confirmed via CLI: `Shadows=50` raised mean-luma 32.4→52.6;
+        `Shadows=-50` was identical (32.42) — RT-specific (Capture One's Shadow slider is
+        bidirectional). Live e2e (v19): the twilight woodland and the night concert both **held the
+        dark mass** — small `shadows` (10 / 8), a lowered tone-curve toe `[0.25,0.18]`, and critiques
+        that explicitly kept the shadows dark.
 5. **Auto lens correction (item #4)** — **implemented & verified live (v14)**. `DevelopSettings`
    gains a `lensCorrection` flag → `Pp3Writer` emits `[LensProfile] LcMode=lfauto` (distortion +
    vignetting, `UseCA=false`). App-controlled via `PHOTO_LENS_CORRECTION` (default **true**), applied

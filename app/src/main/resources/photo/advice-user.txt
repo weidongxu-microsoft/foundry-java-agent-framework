@@ -1,0 +1,1 @@
+Classify this photo, critique the neutral version, and propose adjustments to develop it well. Return only the JSON object.

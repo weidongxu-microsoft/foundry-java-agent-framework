@@ -70,42 +70,20 @@ final class RawDevelopMiddleware implements AgentMiddleware {
     /** How long to wait for the vision advice sub-call before falling back to neutral. */
     private static final Duration ADVICE_TIMEOUT = Duration.ofSeconds(120);
 
-    private static final String ADVICE_SYSTEM =
-            "You are an expert RAW developer finishing this photo the way a professional would. You "
-                    + "are shown a neutrally developed camera photo. Work in three steps and return "
-                    + "all of them:\n"
-                    + "1. Classify the photo: its genre (portrait, landscape, golden-hour, "
-                    + "moody/overcast, night, street, product, other) and the intended mood/look it "
-                    + "should convey.\n"
-                    + "2. Critique the neutral version specifically and honestly: white balance / "
-                    + "color cast, overall exposure, highlight and shadow detail (any clipping), "
-                    + "contrast and tonal response (curve), and saturation — say what is off and why, "
-                    + "given the genre and mood.\n"
-                    + "3. Propose global adjustments that fix the critique, reasoning white balance "
-                    + "first, then exposure (protect important highlights — blown highlights can't be "
-                    + "recovered), then highlights/shadows, then a gentle roll-off S-curve, then "
-                    + "restrained saturation. Preserve the scene's real light and mood; if an "
-                    + "adjustment would be obviously visible as an edit, dial it back. Portrait: soft "
-                    + "contrast, gentle saturation, warm-neutral skin. Landscape: protect the sky, "
-                    + "open shadows, a little more punch is fine. Golden hour: keep the warmth. Night: "
-                    + "cool white balance, preserve light sources, limit shadow lifting. Product: "
-                    + "neutral and accurate.\n\n"
-                    + "Respond with ONLY a JSON object (no prose, no code fences) with keys: "
-                    + "\"genre\" (string), \"mood\" (string), \"critique\" (string, 1-3 sentences), "
-                    + "and \"adjustments\" (object). The \"adjustments\" object uses any of these "
-                    + "optional keys: white_balance_temp_k (integer Kelvin, ~2500-9000), tint (double, "
-                    + "1.0 neutral, >1 greener), exposure_ev (double stops, e.g. -1.0..1.0), contrast "
-                    + "(integer -100..100), saturation (integer -100..100), highlights (integer "
-                    + "-100..100, positive recovers blown highlights), shadows (integer -100..100, "
-                    + "positive lifts shadows), and tone_curve (an array of [x, y] control points, "
-                    + "each in [0,1], strictly ascending in x, where x is input and y is output "
-                    + "brightness; include the endpoints [0,0] and [1,1] and 1-3 interior points, "
-                    + "e.g. a gentle S-curve like [[0,0],[0.25,0.22],[0.75,0.80],[1,1]]; omit it for a "
-                    + "straight tonal response). Omit any adjustments key you would leave unchanged.";
+    private static final String ADVICE_SYSTEM = loadResource("/photo/advice-system.txt");
 
-    private static final String ADVICE_USER =
-            "Classify this photo, critique the neutral version, and propose adjustments to develop it "
-                    + "well. Return only the JSON object.";
+    private static final String ADVICE_USER = loadResource("/photo/advice-user.txt");
+
+    private static String loadResource(String path) {
+        try (java.io.InputStream in = RawDevelopMiddleware.class.getResourceAsStream(path)) {
+            if (in == null) {
+                throw new IllegalStateException("Missing classpath resource: " + path);
+            }
+            return new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).trim();
+        } catch (java.io.IOException error) {
+            throw new java.io.UncheckedIOException("Failed to load " + path, error);
+        }
+    }
 
     private final RawDeveloper developer;
     private final Integer maxLongEdgePx;
