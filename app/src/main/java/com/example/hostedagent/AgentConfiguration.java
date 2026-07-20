@@ -238,7 +238,7 @@ public class AgentConfiguration {
             @Value("${CODE_INTERPRETER_ENABLED:true}") boolean codeInterpreterEnabled,
             @Value("${TODO_TOOL_ENABLED:false}") boolean todoToolEnabled,
             @Value("${PHOTO_ENABLED:true}") boolean photoEnabled,
-            @Value("${PHOTO_MAX_LONG_EDGE_PX:2048}") int photoMaxLongEdgePx,
+            @Value("${PHOTO_MAX_LONG_EDGE_PX:0}") int photoMaxLongEdgePx,
             @Value("${PHOTO_ADVICE_ENABLED:true}") boolean photoAdviceEnabled,
             @Value("${PHOTO_ADVICE_LONG_EDGE_PX:1024}") int photoAdviceLongEdgePx,
             @Value("${PHOTO_LENS_CORRECTION:true}") boolean photoLensCorrection,

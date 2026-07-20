@@ -139,6 +139,21 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
      key spec is unchanged. Verified e2e on two RAFs: the model now makes genre-driven, more restrained
      choices — e.g. a cool-lit frame drew **3700K** WB + limited shadow lift, a daylight frame stayed
      **5900K**, both with lower saturation and gentle roll-off curves.
+   - **Critique-first advice + full-size output + visible reasoning (item #8) — verified live (v18).**
+     Two changes driven by "results not great; show me what it thinks":
+     1. **Full-size final JPEG.** The delivered develop is no longer capped to a preview size — only
+        the advice **preview** is downscaled (`PHOTO_ADVICE_LONG_EDGE_PX`, 1024). The final output is
+        full sensor resolution by default (`PHOTO_MAX_LONG_EDGE_PX` default **0 = full**; still
+        overridable). Full-res data URLs (~6-10 MB) pass through the Foundry gateway fine.
+     2. **Classify → critique → propose, and return the reasoning.** `ADVICE_SYSTEM` now asks the
+        model to (1) classify genre + intended mood, (2) critique the neutral render (WB/color,
+        exposure, highlight/shadow clipping, contrast/curve, saturation), then (3) propose adjustments
+        that fix the critique. The response JSON gains `genre`, `mood`, `critique`, and a nested
+        `adjustments` object (parsed into `DevelopSettings`); the note surfaces the genre/mood +
+        critique to the user alongside the applied values. Live e2e produced genre-specific, critique-
+        driven edits — e.g. a concert frame drew cool 3600K + **negative** saturation ("reds already
+        intense") and gentle contrast; a twilight woodland drew **negative** contrast + a large shadow
+        lift to open collapsed shadows.
 5. **Auto lens correction (item #4)** — **implemented & verified live (v14)**. `DevelopSettings`
    gains a `lensCorrection` flag → `Pp3Writer` emits `[LensProfile] LcMode=lfauto` (distortion +
    vignetting, `UseCA=false`). App-controlled via `PHOTO_LENS_CORRECTION` (default **true**), applied

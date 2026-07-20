@@ -72,35 +72,40 @@ final class RawDevelopMiddleware implements AgentMiddleware {
 
     private static final String ADVICE_SYSTEM =
             "You are an expert RAW developer finishing this photo the way a professional would. You "
-                    + "are shown a neutrally developed camera photo. First read the scene and its genre "
-                    + "(portrait, landscape, golden-hour, moody/overcast, night, product) and edit to "
-                    + "serve its existing light and mood, not a generic look. Reason in this order: "
-                    + "(1) fix white balance first — correct unwanted casts but preserve intentional "
-                    + "warmth at golden hour or coolness at night, and keep skin warm-neutral for "
-                    + "portraits; (2) set exposure from the tones, protecting detail in important "
-                    + "highlights (blown highlights can't be recovered) while keeping shadows open; "
-                    + "(3) recover highlights and lift shadows to balance the dynamic range; (4) build "
-                    + "contrast with a gentle S-curve that deepens midtones but rolls off near pure "
-                    + "black and white so nothing clips or crushes; (5) add saturation only with "
-                    + "restraint. Prefer a believable, restrained result — if an adjustment would be "
-                    + "obviously visible as an edit, dial it back. Portrait: soft contrast, gentle "
-                    + "saturation, protect skin. Landscape: protect the sky, open shadows, a little "
-                    + "more punch is fine. Night: cool white balance, preserve light sources, limit "
-                    + "shadow lifting. Product: neutral and accurate. "
-                    + "Respond with ONLY a JSON object (no prose, no code fences) using any of these "
+                    + "are shown a neutrally developed camera photo. Work in three steps and return "
+                    + "all of them:\n"
+                    + "1. Classify the photo: its genre (portrait, landscape, golden-hour, "
+                    + "moody/overcast, night, street, product, other) and the intended mood/look it "
+                    + "should convey.\n"
+                    + "2. Critique the neutral version specifically and honestly: white balance / "
+                    + "color cast, overall exposure, highlight and shadow detail (any clipping), "
+                    + "contrast and tonal response (curve), and saturation — say what is off and why, "
+                    + "given the genre and mood.\n"
+                    + "3. Propose global adjustments that fix the critique, reasoning white balance "
+                    + "first, then exposure (protect important highlights — blown highlights can't be "
+                    + "recovered), then highlights/shadows, then a gentle roll-off S-curve, then "
+                    + "restrained saturation. Preserve the scene's real light and mood; if an "
+                    + "adjustment would be obviously visible as an edit, dial it back. Portrait: soft "
+                    + "contrast, gentle saturation, warm-neutral skin. Landscape: protect the sky, "
+                    + "open shadows, a little more punch is fine. Golden hour: keep the warmth. Night: "
+                    + "cool white balance, preserve light sources, limit shadow lifting. Product: "
+                    + "neutral and accurate.\n\n"
+                    + "Respond with ONLY a JSON object (no prose, no code fences) with keys: "
+                    + "\"genre\" (string), \"mood\" (string), \"critique\" (string, 1-3 sentences), "
+                    + "and \"adjustments\" (object). The \"adjustments\" object uses any of these "
                     + "optional keys: white_balance_temp_k (integer Kelvin, ~2500-9000), tint (double, "
                     + "1.0 neutral, >1 greener), exposure_ev (double stops, e.g. -1.0..1.0), contrast "
                     + "(integer -100..100), saturation (integer -100..100), highlights (integer "
                     + "-100..100, positive recovers blown highlights), shadows (integer -100..100, "
                     + "positive lifts shadows), and tone_curve (an array of [x, y] control points, "
-                    + "each in [0,1], strictly ascending in x, defining a tonal curve where x is input "
-                    + "and y is output brightness; include the endpoints [0,0] and [1,1] and 1-3 "
-                    + "interior points, e.g. a gentle S-curve like [[0,0],[0.25,0.22],[0.75,0.80],[1,1]] "
-                    + "for more contrast; omit it for a straight tonal response). Omit any key you "
-                    + "would leave unchanged.";
+                    + "each in [0,1], strictly ascending in x, where x is input and y is output "
+                    + "brightness; include the endpoints [0,0] and [1,1] and 1-3 interior points, "
+                    + "e.g. a gentle S-curve like [[0,0],[0.25,0.22],[0.75,0.80],[1,1]]; omit it for a "
+                    + "straight tonal response). Omit any adjustments key you would leave unchanged.";
 
     private static final String ADVICE_USER =
-            "Suggest adjustment values to develop this photo well. Return only the JSON object.";
+            "Classify this photo, critique the neutral version, and propose adjustments to develop it "
+                    + "well. Return only the JSON object.";
 
     private final RawDeveloper developer;
     private final Integer maxLongEdgePx;
@@ -213,7 +218,10 @@ final class RawDevelopMiddleware implements AgentMiddleware {
 
             DevelopSettings settings;
             if (advice != null) {
-                settings = advice.settings.toBuilder().lensCorrection(lensCorrection).build();
+                settings = advice.settings.toBuilder()
+                        .lensCorrection(lensCorrection)
+                        .maxLongEdgePx(maxLongEdgePx)
+                        .build();
             } else {
                 DevelopSettings.Builder b = DevelopSettings.builder().lensCorrection(lensCorrection);
                 if (maxLongEdgePx != null) {
@@ -225,18 +233,29 @@ final class RawDevelopMiddleware implements AgentMiddleware {
 
             byte[] jpeg = Files.readAllBytes(jpegPath);
             DataContent output = new DataContent(jpeg, "image/jpeg", baseName(name) + ".jpg");
+            String sizeNote = (jpeg.length / 1024) + " KB"
+                    + (maxLongEdgePx != null ? ", max " + maxLongEdgePx + "px long edge" : ", full resolution")
+                    + (lensCorrection ? ", auto lens correction" : "");
             String note;
             if (advice != null) {
-                note = "Developed **" + name + "** with AI-suggested adjustments ("
-                        + (jpeg.length / 1024) + " KB"
-                        + (maxLongEdgePx != null ? ", max " + maxLongEdgePx + "px long edge" : "")
-                        + (lensCorrection ? ", auto lens correction" : "")
-                        + ").\n\nApplied adjustments: `" + advice.json + "`\n\n" + output.toDataUri();
+                StringBuilder sb = new StringBuilder();
+                sb.append("Developed **").append(name).append("** with AI-suggested adjustments (")
+                        .append(sizeNote).append(").\n\n");
+                if (!advice.genre.isEmpty() || !advice.mood.isEmpty()) {
+                    sb.append("**Genre / mood:** ").append(advice.genre);
+                    if (!advice.mood.isEmpty()) {
+                        sb.append(advice.genre.isEmpty() ? "" : " — ").append(advice.mood);
+                    }
+                    sb.append("\n\n");
+                }
+                if (!advice.critique.isEmpty()) {
+                    sb.append("**Critique:** ").append(advice.critique).append("\n\n");
+                }
+                sb.append("Applied adjustments: `").append(advice.json).append("`\n\n")
+                        .append(output.toDataUri());
+                note = sb.toString();
             } else {
-                note = "Developed **" + name + "** to a neutral JPEG ("
-                        + (jpeg.length / 1024) + " KB"
-                        + (maxLongEdgePx != null ? ", max " + maxLongEdgePx + "px long edge" : "")
-                        + (lensCorrection ? ", auto lens correction" : "")
+                note = "Developed **" + name + "** to a neutral JPEG (" + sizeNote
                         + "). The image is returned below as a data URL.\n\n" + output.toDataUri();
             }
             return ChatMessage.builder(ChatRole.ASSISTANT).text(note).build();
@@ -251,10 +270,11 @@ final class RawDevelopMiddleware implements AgentMiddleware {
     }
 
     /**
-     * Develops a small neutral preview, asks the vision model for adjustment values, and parses them
-     * into {@link DevelopSettings}. The output size ({@code maxLongEdgePx}) is forced onto the result
-     * so the model cannot dictate the final resolution. Returns {@code null} on any failure (the
-     * caller then falls back to a neutral develop).
+     * Develops a small neutral preview, asks the vision model to classify + critique + propose
+     * adjustments, and parses the {@code adjustments} object into {@link DevelopSettings} (along with
+     * the genre/mood/critique text for the user-facing note). The final resolution is app-controlled
+     * (never model-dictated). Returns {@code null} on any failure (the caller then falls back to a
+     * neutral develop).
      */
     private AdviceResult adviseSettings(Path work, Path rawPath) {
         try {
@@ -295,11 +315,16 @@ final class RawDevelopMiddleware implements AgentMiddleware {
                 return null;
             }
             ObjectNode object = (ObjectNode) node;
-            object.remove("max_long_edge_px");
-            if (maxLongEdgePx != null) {
-                object.put("max_long_edge_px", maxLongEdgePx.intValue());
-            }
-            return new AdviceResult(DevelopSettings.fromJsonNode(object), object.toString());
+            JsonNode adjNode = object.get("adjustments");
+            ObjectNode adjustments = (adjNode instanceof ObjectNode) ? (ObjectNode) adjNode : object;
+            // The final resolution is app-controlled, never model-dictated.
+            adjustments.remove("max_long_edge_px");
+            return new AdviceResult(
+                    DevelopSettings.fromJsonNode(adjustments),
+                    adjustments.toString(),
+                    object.path("genre").asText("").trim(),
+                    object.path("mood").asText("").trim(),
+                    object.path("critique").asText("").trim());
         } catch (Exception error) {
             LOG.warn("Vision advice failed; falling back to neutral develop: {}", error.toString());
             return null;
@@ -324,14 +349,20 @@ final class RawDevelopMiddleware implements AgentMiddleware {
         return trimmed.trim();
     }
 
-    /** Parsed vision advice plus the JSON string (for the user-facing note). */
+    /** Parsed vision advice: settings, the adjustments JSON, and the model's reasoning (for the note). */
     private static final class AdviceResult {
         private final DevelopSettings settings;
         private final String json;
+        private final String genre;
+        private final String mood;
+        private final String critique;
 
-        AdviceResult(DevelopSettings settings, String json) {
+        AdviceResult(DevelopSettings settings, String json, String genre, String mood, String critique) {
             this.settings = settings;
             this.json = json;
+            this.genre = genre;
+            this.mood = mood;
+            this.critique = critique;
         }
     }
 
