@@ -28,7 +28,7 @@ biggest difference from MAF's .NET/Python and the first thing to get right when 
   startup fast so the readiness probe passes. Reference implementation: **[`app/entrypoint.sh`](app/entrypoint.sh)**.
 - **Roadmap:** this is currently solved in the **workload** (`app/`), not the framework — a candidate
   to pull into the framework's hosting/runtime layer (a startup truststore-augmentation) so workloads
-  need zero TLS plumbing. See [`plan/09-framework-lessons.md`](plan/09-framework-lessons.md).
+  need zero TLS plumbing.
 
 ## Framework modules (`framework/`) — the product
 
@@ -63,8 +63,7 @@ that depend on the framework as installed artifacts.
 
 Progressive, runnable examples mirroring MAF's `python/samples/` / `dotnet/samples/` (`01-get-started`
 → `05-end-to-end`). Currently a **scaffold** (folders + READMEs mapped to framework surfaces); sample
-code is being added incrementally. See [`samples/README.md`](samples/README.md) and
-[`plan/16-samples-parity.md`](plan/16-samples-parity.md).
+code is being added incrementally. See [`samples/README.md`](samples/README.md).
 
 ## Build & test
 
@@ -88,9 +87,6 @@ mvn -q -f framework\mcp\pom.xml -Dtest=McpToolSourceTest test
 
 ## Docs
 
-- **`plan/`** — design notes, parity plan, and captured learnings.
-  [`plan/README.md`](plan/README.md) is the index; [`plan/11-parity-matrix.md`](plan/11-parity-matrix.md)
-  is the living MAF-parity ledger.
 - **`AGENTS.md`** — repository conventions and workflow guide.
 
 ## References
