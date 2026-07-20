@@ -212,6 +212,9 @@ public final class OpenAIResponsesChatClient implements ChatClient {
             input.add(ResponseInputItem.ofEasyInputMessage(
                     EasyInputMessage.builder()
                             .role(mapRole(message.getRole()))
+                            // The content-list variant does not emit the union discriminator, so the
+                            // Responses API rejects the item with "Invalid value: ''"; set it explicitly.
+                            .type(EasyInputMessage.Type.MESSAGE)
                             .contentOfResponseInputMessageContentList(parts)
                             .build()));
         } else if (text.length() > 0) {

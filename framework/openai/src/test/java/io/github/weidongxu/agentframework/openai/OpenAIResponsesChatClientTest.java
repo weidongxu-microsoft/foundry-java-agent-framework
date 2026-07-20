@@ -12,6 +12,7 @@ import io.github.weidongxu.agentframework.chat.DataContent;
 import com.openai.core.ObjectMappers;
 import com.openai.core.http.StreamResponse;
 import com.openai.models.responses.Response;
+import com.openai.models.responses.EasyInputMessage;
 import com.openai.models.responses.ResponseCreateParams;
 import com.openai.models.responses.ResponseInputItem;
 import com.openai.models.responses.ResponseStreamEvent;
@@ -71,6 +72,9 @@ class OpenAIResponsesChatClientTest {
 
         List<ResponseInputItem> input = params.input().orElseThrow().asResponse();
         assertTrue(input.get(0).isEasyInputMessage());
+        assertEquals(
+                EasyInputMessage.Type.MESSAGE,
+                input.get(0).asEasyInputMessage().type().orElseThrow());
         var content = input.get(0).asEasyInputMessage().content();
         assertTrue(content.isResponseInputMessageContentList());
         var parts = content.asResponseInputMessageContentList();

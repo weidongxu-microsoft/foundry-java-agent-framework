@@ -91,8 +91,8 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
    inside `output_text` — the gateway-safe delivery. It **short-circuits the model** (buffered +
    streaming). Wired in `AgentConfiguration` (default on, `PHOTO_ENABLED`); `TodoTool` retired
    (default off). Dockerfile runtime installs `rawtherapee`.
-4. **Vision advice (item #2/#3)** — **designed, in progress**. Same middleware seam; when a RAW is
-   attached and `PHOTO_ADVICE_ENABLED` (default on):
+4. **Vision advice (item #2/#3)** — **implemented & verified on Foundry (v13)**. Same middleware seam;
+   when a RAW is attached and `PHOTO_ADVICE_ENABLED` (default on):
    1. Develop a **small neutral JPEG** at `PHOTO_ADVICE_LONG_EDGE_PX` (default 1024) — cheap for the
       model to look at.
    2. **Vision sub-call:** build a user `ChatMessage` = `[TextContent(advice prompt),
@@ -116,6 +116,14 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
      langchain4j adapter is a demo and intentionally does **not** get vision-in support.
    - **Config:** `PHOTO_ADVICE_ENABLED` (default true), `PHOTO_ADVICE_LONG_EDGE_PX` (default 1024);
      reuses `MODEL` for the vision call.
+   - **Foundry gotcha (fixed):** the `input_image` `EasyInputMessage` must set `type: "message"`
+     explicitly — the content-list builder variant omits the union discriminator and the Responses
+     API rejects it with `400 Invalid value: ''`. Plain text-content messages emit it automatically;
+     only the multi-part (image) path needed the explicit `.type(EasyInputMessage.Type.MESSAGE)`.
+   - **Verified end-to-end (v13, `CHAT_CLIENT=foundry`, `gpt-5-4`):** a blob-SAS `file_url` request
+     returned "AI-suggested adjustments" with real values
+     (`white_balance_temp_k`, `tint`, `exposure_ev`, `contrast`, `saturation`, `highlights`,
+     `shadows`) and a valid 2048×1366 / 804KB adjusted JPEG in ~52s.
 
 Deploy: re-enable the Foundry agent, `az acr build` the image, verify item #1 end-to-end. Watch the
 inbound request size — a full RAW as base64 `input_file` (~32MB) may hit the gateway limit; use a
