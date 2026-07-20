@@ -18,9 +18,7 @@ import io.github.weidongxu.agentframework.middleware.AgentStreamingMiddlewareNex
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.github.weidongxu.photo.CropRect;
 import io.github.weidongxu.photo.DevelopSettings;
-import io.github.weidongxu.photo.ImageCrop;
 import io.github.weidongxu.photo.RawDevelopException;
 import io.github.weidongxu.photo.RawDeveloper;
 import org.slf4j.Logger;
@@ -72,9 +70,6 @@ final class RawDevelopMiddleware implements AgentMiddleware {
     /** How long to wait for the vision advice sub-call before falling back to neutral. */
     private static final Duration ADVICE_TIMEOUT = Duration.ofSeconds(120);
 
-    /** JPEG quality for the app-side crop re-encode (matches the developer's default). */
-    private static final int JPEG_QUALITY = 92;
-
     private static final String ADVICE_SYSTEM =
             "You are a professional photo-editing assistant. You are shown a neutrally developed "
                     + "camera photo. Suggest tasteful, natural-looking global adjustments to improve it. "
@@ -83,11 +78,7 @@ final class RawDevelopMiddleware implements AgentMiddleware {
                     + "1.0 neutral, >1 greener), exposure_ev (double stops, e.g. -1.0..1.0), contrast "
                     + "(integer -100..100), saturation (integer -100..100), highlights (integer "
                     + "-100..100, positive recovers blown highlights), shadows (integer -100..100, "
-                    + "positive lifts shadows), and optionally crop (object with normalized edges in "
-                    + "[0,1]: left, top, right, bottom, where 0,0 is the top-left and 1,1 the "
-                    + "bottom-right). Only include crop when it clearly improves composition, and keep "
-                    + "at least 60% of each dimension; omit crop to keep the full frame. Omit any key "
-                    + "you would leave unchanged.";
+                    + "positive lifts shadows). Omit any key you would leave unchanged.";
 
     private static final String ADVICE_USER =
             "Suggest adjustment values to develop this photo well. Return only the JSON object.";
@@ -214,24 +205,14 @@ final class RawDevelopMiddleware implements AgentMiddleware {
             developer.develop(rawPath, settings, jpegPath);
 
             byte[] jpeg = Files.readAllBytes(jpegPath);
-            CropRect crop = advice != null ? advice.crop : null;
-            if (crop != null) {
-                jpeg = ImageCrop.crop(jpeg, crop, JPEG_QUALITY);
-            }
             DataContent output = new DataContent(jpeg, "image/jpeg", baseName(name) + ".jpg");
             String note;
             if (advice != null) {
-                StringBuilder n = new StringBuilder();
-                n.append("Developed **").append(name).append("** with AI-suggested adjustments (")
-                        .append(jpeg.length / 1024).append(" KB")
-                        .append(maxLongEdgePx != null ? ", max " + maxLongEdgePx + "px long edge" : "")
-                        .append(lensCorrection ? ", auto lens correction" : "").append(").\n\n");
-                n.append("Applied adjustments: `").append(advice.json).append("`\n\n");
-                if (crop != null) {
-                    n.append("Applied crop: `").append(crop).append("`\n\n");
-                }
-                n.append(output.toDataUri());
-                note = n.toString();
+                note = "Developed **" + name + "** with AI-suggested adjustments ("
+                        + (jpeg.length / 1024) + " KB"
+                        + (maxLongEdgePx != null ? ", max " + maxLongEdgePx + "px long edge" : "")
+                        + (lensCorrection ? ", auto lens correction" : "")
+                        + ").\n\nApplied adjustments: `" + advice.json + "`\n\n" + output.toDataUri();
             } else {
                 note = "Developed **" + name + "** to a neutral JPEG ("
                         + (jpeg.length / 1024) + " KB"
@@ -299,11 +280,7 @@ final class RawDevelopMiddleware implements AgentMiddleware {
             if (maxLongEdgePx != null) {
                 object.put("max_long_edge_px", maxLongEdgePx.intValue());
             }
-            // Crop is applied app-side on the developed JPEG (normalized, resolution-independent), so
-            // it is parsed out separately and not fed to the RawTherapee profile.
-            CropRect crop = CropRect.fromJsonNode(object.remove("crop"));
-            return new AdviceResult(
-                    DevelopSettings.fromJsonNode(object), object.toString(), crop);
+            return new AdviceResult(DevelopSettings.fromJsonNode(object), object.toString());
         } catch (Exception error) {
             LOG.warn("Vision advice failed; falling back to neutral develop: {}", error.toString());
             return null;
@@ -328,16 +305,14 @@ final class RawDevelopMiddleware implements AgentMiddleware {
         return trimmed.trim();
     }
 
-    /** Parsed vision advice plus the raw JSON string (for the user-facing note) and optional crop. */
+    /** Parsed vision advice plus the JSON string (for the user-facing note). */
     private static final class AdviceResult {
         private final DevelopSettings settings;
         private final String json;
-        private final CropRect crop;
 
-        AdviceResult(DevelopSettings settings, String json, CropRect crop) {
+        AdviceResult(DevelopSettings settings, String json) {
             this.settings = settings;
             this.json = json;
-            this.crop = crop;
         }
     }
 
