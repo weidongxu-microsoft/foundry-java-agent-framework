@@ -130,6 +130,15 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
      example, `[0,0]`/`[1,1]` endpoints) to `ADVICE_SYSTEM`. The model now returns e.g.
      `[[0,0],[0.2,0.26],[0.75,0.78],[1,1]]`, applied through `Pp3Writer` (confirmed locally that a
      curve pp3 develops cleanly and differs from neutral). Verified e2e on v16.
+   - **Expert advice prompt (item #7) — refined & verified live (v17).** Replaced the vague "suggest
+     tasteful, natural-looking global adjustments" with an expert mental model (research synthesis of
+     CaptureLandscapes / Fstoppers / Photography Life / Adobe CameraRaw): reason **WB → exposure
+     (protect highlights) → highlights/shadows → gentle roll-off S-curve → restrained saturation**,
+     genre-aware (portrait / landscape / golden-hour / moody / night / product), with a restraint
+     doctrine ("if the edit is visible, it's too much"). Only the reasoning preamble changed; the JSON
+     key spec is unchanged. Verified e2e on two RAFs: the model now makes genre-driven, more restrained
+     choices — e.g. a cool-lit frame drew **3700K** WB + limited shadow lift, a daylight frame stayed
+     **5900K**, both with lower saturation and gentle roll-off curves.
 5. **Auto lens correction (item #4)** — **implemented & verified live (v14)**. `DevelopSettings`
    gains a `lensCorrection` flag → `Pp3Writer` emits `[LensProfile] LcMode=lfauto` (distortion +
    vignetting, `UseCA=false`). App-controlled via `PHOTO_LENS_CORRECTION` (default **true**), applied
