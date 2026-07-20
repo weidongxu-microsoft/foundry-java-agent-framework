@@ -19,4 +19,7 @@ Thumbs.db
 # Local memory store (memory skill)
 .memory/
 
+# Local infrastructure inventories (resource IDs, endpoints, principal IDs; never secret values)
+.private/
+
 .last_image_tag

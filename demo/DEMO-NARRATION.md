@@ -9,30 +9,30 @@ slide text — the voice adds the *why*. Word counts are the spoken line only.
 
 Same photography-assistant agent, same Foundry wire contract, built two ways. Let's walk the code.
 
-**Slide 2 — The demo app** (~10s)
+**Slide 2 — The demo app** (~6s)
 
-One rule decides every turn: a photo goes to photo-process, everything else is a normal chat. Identical on both sides — so all that changes is what you write around it.
+A photo goes to photo-process; anything else is chat. Same on both sides — only the plumbing around it differs.
 
-**Slide 3 — Wire contract** (~10s)
+**Slide 3 — Wire contract** (~7s)
 
-The REST endpoint, readiness, named SSE, the response envelope — with the framework you write none of it. Without, that's a couple hundred lines you own and keep correct.
+REST, readiness, named SSE, the response envelope — free with the framework, a couple hundred lines without.
 
-**Slide 4 — Streaming relay** (~12s)
+**Slide 4 — Streaming relay** (~9s)
 
-Streaming is one line: the framework relays the model's frames for you. By hand it's the whole loop — and you even have to strip the `[DONE]` sentinel, because Chat-Completions sends it but the Responses contract forbids it.
+Streaming is one line. By hand it's the whole loop — you even strip the `[DONE]` sentinel, which Chat-Completions sends but the Responses contract forbids.
 
-**Slide 5 — Routing** (~10s)
+**Slide 5 — Routing** (~7s)
 
-Here both sides genuinely write code — it's the same decision. This is the app logic; everything else on the right is plumbing that shouldn't exist.
+Both sides write this — it's the real decision. Everything else on the right is plumbing that shouldn't exist.
 
-**Slide 6 — Add memory** (~10s)
+**Slide 6 — Add memory** (~8s)
 
-Now add durable memory. One line attaches a provider. Without it, three hundred-plus lines — scope, recall, extraction, every gotcha — and you're on the hook for all of them.
+Durable memory: one line to attach a provider, versus three hundred-plus — scope, recall, extraction, every gotcha on you.
 
-**Slide 7 — …just middleware** (~10s)
+**Slide 7 — …just middleware** (~8s)
 
-And this was one seam. Same demo: roughly five hundred lines against a thousand. The framework carries the rest — providers, tools, workflows, hosting. It's a whole programming model.
+And that was one seam: five hundred lines versus a thousand. The framework carries the rest — providers, tools, workflows, hosting.
 
 ---
 
-**Total ≈ 70s.** To hit 60s, trim slide 4's `[DONE]` aside and slide 5.
+**Total ≈ 55s.**

@@ -179,6 +179,16 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
         model-driven). Result (v20, viewed): the concert singer is lifted out of the dark via
         `shadows` **recovery** (tone-selective, rolls off before true black) while the room stays
         black — exactly what the blunt global toe could not do.
+     - **Open / backlog — low-key "lift vs. suppress" is prompt-driven, needs a generic fix.** On a
+       spotlit concert frame the agent (and a context-free gpt-5.4 given the *same* prompt + neutral
+       preview) both **lifted** shadows/exposure, revealing a distracting background and flattening the
+       subject; the photographer's own edit **suppressed** shadows and let the spotlight + contrast
+       isolate the subject. Isolation probe confirmed this is **the prompt, not the model** — the
+       prompt's "rescue the muddy subject" exception + all-lifting reasoning order steer any model to
+       brighten, and never offer suppress-and-isolate. **Do NOT fix by enumerating more genre cases in
+       the prompt** (user preference) — find a *generic* approach (e.g. let the model reason from the
+       histogram / subject-vs-background separation, or a local/masked lever) rather than hand-coding
+       each scene. Deferred.
 5. **Auto lens correction (item #4)** — **implemented & verified live (v14)**. `DevelopSettings`
    gains a `lensCorrection` flag → `Pp3Writer` emits `[LensProfile] LcMode=lfauto` (distortion +
    vignetting, `UseCA=false`). App-controlled via `PHOTO_LENS_CORRECTION` (default **true**), applied
