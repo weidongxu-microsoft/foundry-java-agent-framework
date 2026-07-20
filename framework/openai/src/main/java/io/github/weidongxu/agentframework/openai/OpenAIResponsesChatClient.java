@@ -12,6 +12,7 @@ import io.github.weidongxu.agentframework.chat.FunctionCallContent;
 import io.github.weidongxu.agentframework.chat.FunctionResultContent;
 import io.github.weidongxu.agentframework.chat.PlatformRequestHeaders;
 import io.github.weidongxu.agentframework.chat.ResponseFormat;
+import io.github.weidongxu.agentframework.chat.DataContent;
 import io.github.weidongxu.agentframework.chat.TextContent;
 import io.github.weidongxu.agentframework.chat.Usage;
 import io.github.weidongxu.agentframework.tool.HostedCodeInterpreterTool;
@@ -176,6 +177,12 @@ public final class OpenAIResponsesChatClient implements ChatClient {
                                 .callId(result.getCallId())
                                 .output(result.getResult())
                                 .build()));
+            } else if (content instanceof DataContent) {
+                // A text-only Responses model cannot consume binary attachments (e.g. a camera RAW);
+                // skip them here. A host pipeline that understands the bytes handles them out-of-band,
+                // and a text breadcrumb naming the attachment is injected upstream so the model still
+                // knows one is present.
+                continue;
             } else {
                 throw new IllegalArgumentException(
                         "Unsupported OpenAI chat content: " + content.getClass().getName());

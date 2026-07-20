@@ -15,8 +15,10 @@ import io.github.weidongxu.agentframework.agentserver.responses.ResponseSink;
 import io.github.weidongxu.agentframework.agentserver.responses.ResponseStore;
 import io.github.weidongxu.agentframework.agentserver.responses.StoredResponse;
 import io.github.weidongxu.agentframework.chat.ChatMessage;
+import io.github.weidongxu.agentframework.chat.ChatContent;
 import io.github.weidongxu.agentframework.chat.ChatOptions;
 import io.github.weidongxu.agentframework.chat.ChatRole;
+import io.github.weidongxu.agentframework.chat.DataContent;
 import io.github.weidongxu.agentframework.chat.FunctionCallContent;
 import io.github.weidongxu.agentframework.chat.FunctionResultContent;
 import io.github.weidongxu.agentframework.chat.TextContent;
@@ -33,6 +35,7 @@ import java.io.PrintWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -538,9 +541,9 @@ public final class AgentResponseHandler implements ResponseHandler {
                         .build());
             } else {
                 ChatRole role = role(value(map.get("role")));
-                messages.add(ChatMessage.builder(role)
-                        .text(contentText(map.get("content")))
-                        .build());
+                ChatMessage.Builder messageBuilder = ChatMessage.builder(role);
+                contentParts(map.get("content")).forEach(messageBuilder::addContent);
+                messages.add(messageBuilder.build());
             }
         }
         if (messages.isEmpty()) {
@@ -549,25 +552,116 @@ public final class AgentResponseHandler implements ResponseHandler {
         return messages;
     }
 
-    private static String contentText(Object content) {
+    /**
+     * Parses a Responses message {@code content} (a string or a list of typed parts) into framework
+     * {@link ChatContent}. Text parts ({@code input_text}/{@code text}) are concatenated into a
+     * leading {@link TextContent}; binary parts ({@code input_file} with base64 {@code file_data},
+     * or {@code input_image} with a data-URL {@code image_url}) become {@link DataContent}. A text
+     * breadcrumb naming any attachments is appended so a text-only model still knows they are
+     * present even though the bytes are never forwarded upstream. Unresolvable references
+     * ({@code file_id}/{@code file_url}) are ignored.
+     */
+    private static List<ChatContent> contentParts(Object content) {
+        List<ChatContent> parts = new ArrayList<>();
+        StringBuilder text = new StringBuilder();
+        List<String> attachments = new ArrayList<>();
         if (content instanceof String) {
-            return (String) content;
-        }
-        if (content instanceof Iterable<?>) {
-            StringBuilder text = new StringBuilder();
+            text.append((String) content);
+        } else if (content instanceof Iterable<?>) {
             for (Object part : (Iterable<?>) content) {
-                if (part instanceof Map<?, ?>) {
-                    Object value = ((Map<?, ?>) part).get("text");
+                if (!(part instanceof Map<?, ?>)) {
+                    if (part != null) {
+                        text.append(part);
+                    }
+                    continue;
+                }
+                Map<?, ?> map = (Map<?, ?>) part;
+                String type = value(map.get("type"));
+                if ("input_file".equals(type)) {
+                    addAttachment(parts, attachments, dataFromFilePart(map));
+                } else if ("input_image".equals(type)) {
+                    addAttachment(parts, attachments, dataFromImagePart(map));
+                } else {
+                    Object value = map.get("text");
                     if (value != null) {
                         text.append(value);
                     }
-                } else if (part != null) {
-                    text.append(part);
                 }
             }
-            return text.toString();
+        } else if (content != null) {
+            text.append(content);
         }
-        return content == null ? "" : content.toString();
+        if (!attachments.isEmpty()) {
+            if (text.length() > 0) {
+                text.append("\n\n");
+            }
+            text.append("[Attached file(s): ").append(String.join(", ", attachments)).append("]");
+        }
+        if (text.length() > 0) {
+            parts.add(0, new TextContent(text.toString()));
+        }
+        if (parts.isEmpty()) {
+            parts.add(new TextContent(""));
+        }
+        return parts;
+    }
+
+    private static void addAttachment(
+            List<ChatContent> parts, List<String> attachments, DataContent data) {
+        if (data == null) {
+            return;
+        }
+        parts.add(data);
+        attachments.add(data.getName() != null ? data.getName() : data.getMediaType());
+    }
+
+    private static DataContent dataFromFilePart(Map<?, ?> part) {
+        String filename = value(part.get("filename"));
+        Object fileData = part.get("file_data");
+        if (fileData instanceof String && !((String) fileData).isEmpty()) {
+            String encoded = ((String) fileData).trim();
+            try {
+                if (encoded.startsWith("data:")) {
+                    return DataContent.fromDataUri(encoded, filename);
+                }
+                return new DataContent(
+                        Base64.getDecoder().decode(encoded), mediaTypeForName(filename), filename);
+            } catch (IllegalArgumentException error) {
+                LOG.warn("Ignoring input_file with unparsable file_data: {}", error.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private static DataContent dataFromImagePart(Map<?, ?> part) {
+        Object imageUrl = part.get("image_url");
+        String url = imageUrl instanceof Map<?, ?>
+                ? value(((Map<?, ?>) imageUrl).get("url"))
+                : value(imageUrl);
+        if (url != null && url.startsWith("data:")) {
+            try {
+                return DataContent.fromDataUri(url, value(part.get("filename")));
+            } catch (IllegalArgumentException error) {
+                LOG.warn("Ignoring input_image with unparsable image_url: {}", error.getMessage());
+            }
+        }
+        return null;
+    }
+
+    private static String mediaTypeForName(String name) {
+        if (name != null) {
+            String lower = name.toLowerCase(java.util.Locale.ROOT);
+            if (lower.endsWith(".raf")) {
+                return "image/x-fuji-raf";
+            }
+            if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+                return "image/jpeg";
+            }
+            if (lower.endsWith(".png")) {
+                return "image/png";
+            }
+        }
+        return "application/octet-stream";
     }
 
     private static ChatRole role(String role) {

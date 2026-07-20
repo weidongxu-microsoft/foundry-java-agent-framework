@@ -14,6 +14,7 @@ import io.github.weidongxu.agentframework.agentserver.responses.ResponseRequest;
 import io.github.weidongxu.agentframework.agentserver.responses.ResponseSink;
 import io.github.weidongxu.agentframework.chat.ChatMessage;
 import io.github.weidongxu.agentframework.chat.ChatRole;
+import io.github.weidongxu.agentframework.chat.DataContent;
 import io.github.weidongxu.agentframework.chat.FunctionCallContent;
 import io.github.weidongxu.agentframework.chat.ToolApprovalRequestContent;
 import io.github.weidongxu.agentframework.chat.ToolApprovalResponseContent;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -107,8 +110,40 @@ class AgentResponseHandlerTest {
     }
 
     @Test
-    void hasNoSessionWithoutIdentity() throws Exception {
+    void parsesInputFileAttachmentIntoDataContent() throws Exception {
         CapturingAgent agent = new CapturingAgent(AgentResponse.builder()
+                .message(ChatMessage.assistant("ok"))
+                .build());
+        AgentResponseHandler handler = new AgentResponseHandler(agent, objectMapper);
+        byte[] bytes = new byte[] {1, 2, 3, 4, 5};
+        String base64 = Base64.getEncoder().encodeToString(bytes);
+
+        handler.handle(
+                new ResponseRequest(Map.of("input", List.of(Map.of(
+                        "role", "user",
+                        "content", List.of(
+                                Map.of("type", "input_text", "text", "develop this"),
+                                Map.of("type", "input_file", "filename", "shot.RAF",
+                                        "file_data", "data:image/x-fuji-raf;base64," + base64)))))),
+                buffered(),
+                new MockSink());
+
+        ChatMessage message = agent.messages.get(0);
+        // The text part keeps the prompt and gains a breadcrumb naming the attachment.
+        assertTrue(message.getText().contains("develop this"));
+        assertTrue(message.getText().contains("shot.RAF"));
+        // The bytes are carried as DataContent, never flattened to text or sent to the model.
+        DataContent data = (DataContent) message.getContents().stream()
+                .filter(DataContent.class::isInstance)
+                .findFirst()
+                .orElseThrow(AssertionError::new);
+        assertArrayEquals(bytes, data.getData());
+        assertEquals("image/x-fuji-raf", data.getMediaType());
+        assertEquals("shot.RAF", data.getName());
+    }
+
+    @Test
+    void hasNoSessionWithoutIdentity() throws Exception {        CapturingAgent agent = new CapturingAgent(AgentResponse.builder()
                 .message(ChatMessage.assistant("hello"))
                 .build());
         AgentResponseHandler handler = new AgentResponseHandler(agent, objectMapper);

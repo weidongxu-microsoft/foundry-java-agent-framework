@@ -35,6 +35,8 @@ import io.github.weidongxu.agentframework.skill.FileSkillSource;
 import io.github.weidongxu.agentframework.tool.HostedCodeInterpreterTool;
 import io.github.weidongxu.agentframework.tool.HostedWebSearchTool;
 import io.github.weidongxu.agentframework.tool.Tool;
+import io.github.weidongxu.photo.RawDeveloper;
+import io.github.weidongxu.photo.RawTherapeeDeveloper;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -80,8 +82,9 @@ public class AgentConfiguration {
             "You are a helpful assistant. Use the web search tool for questions about current "
                     + "events or facts you are unsure of, and cite sources. Use the code interpreter "
                     + "tool to run Python for precise calculations, data analysis, or generating files. "
-                    + "Use the todo tool to plan and track multi-step work. "
-                    + "Use the memories provided below to personalize your answers when relevant.";
+                    + "When the user attaches a camera RAW photo, it is developed to a JPEG for them "
+                    + "automatically. Use the memories provided below to personalize your answers when "
+                    + "relevant.";
 
     @Bean
     public FoundryClientFactory foundryClientFactory() {
@@ -209,18 +212,32 @@ public class AgentConfiguration {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * The RAW→JPEG developer backing the photo pipeline. Uses the framework-independent
+     * {@code raw-photo} library, which drives the native {@code rawtherapee-cli} (installed in the
+     * runtime image). Configuration (CLI path, JPEG quality) comes from the library's env defaults.
+     */
+    @Bean
+    public RawDeveloper rawDeveloper() {
+        return new RawTherapeeDeveloper();
+    }
+
     @Bean
     public Agent hostedAgent(
             ChatClient chatClient,
             FoundryMemoryProvider memoryProvider,
             TodoTool todoTool,
+            RawDeveloper rawDeveloper,
+            ExecutorService agentExecutor,
             ObjectProvider<McpToolSource> mcpToolSource,
             ObjectProvider<AgentSkillsProvider> skillsProvider,
             @Value("${MODEL:gpt-5.4}") String model,
             @Value("${AGENT_INSTRUCTIONS:}") String instructions,
             @Value("${WEB_SEARCH_CONTEXT_SIZE:medium}") String searchContextSize,
             @Value("${CODE_INTERPRETER_ENABLED:true}") boolean codeInterpreterEnabled,
-            @Value("${TODO_TOOL_ENABLED:true}") boolean todoToolEnabled,
+            @Value("${TODO_TOOL_ENABLED:false}") boolean todoToolEnabled,
+            @Value("${PHOTO_ENABLED:true}") boolean photoEnabled,
+            @Value("${PHOTO_MAX_LONG_EDGE_PX:2048}") int photoMaxLongEdgePx,
             @Value("${MIDDLEWARE_ENABLED:true}") boolean middlewareEnabled) {
         List<Tool> tools = new ArrayList<>();
         tools.add(new HostedWebSearchTool(
@@ -250,6 +267,13 @@ public class AgentConfiguration {
         // observably marked, letting the client assert middleware actually executed in-container.
         if (middlewareEnabled) {
             agentBuilder.middleware(new MarkerMiddleware());
+        }
+        // The app-owned RAW-photo pipeline: when a user attaches a camera RAW, develop it to a JPEG
+        // and return it directly, short-circuiting the model. Replaces the demo TodoTool as the
+        // workload's "real" capability.
+        if (photoEnabled) {
+            agentBuilder.middleware(new RawDevelopMiddleware(
+                    rawDeveloper, photoMaxLongEdgePx > 0 ? photoMaxLongEdgePx : null, agentExecutor));
         }
         // When enabled, add Agent Skills as a second context provider (progressive disclosure).
         AgentSkillsProvider skills = skillsProvider.getIfAvailable();

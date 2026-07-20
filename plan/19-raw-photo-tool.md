@@ -80,27 +80,37 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
 
 1. **Native develop spike** — ✅ **Done** (`photo/` lib). Java `ProcessBuilder` → `rawtherapee-cli`
    + generated `pp3`; baseline + adjusted develop proven locally (see below).
-2. **Multimodal-in** — `DataContent`/`UriContent` in core; `contentText`/`mapMessage` accept
-   `input_image`/`input_file`.
-3. **Vision advice** — sub-call sends baseline JPEG, returns JSON params (structured output).
-4. **Multimodal-out** — image content or URL; wire the app pipeline; retire `TodoTool`.
+2. **Multimodal-in** — ✅ **Done**. Core `DataContent` (bytes + media type + name); the Foundry
+   `AgentResponseHandler` parses `input_file` (base64 `file_data`) / `input_image` (data-URL
+   `image_url`) into `DataContent` on the user message, plus a text breadcrumb naming the
+   attachment. `OpenAIResponsesChatClient` skips `DataContent` (a text model can't consume a RAW),
+   so the bytes never go upstream.
+3. **App pipeline + multimodal-out (item #1, neutral)** — ✅ **Done**. `RawDevelopMiddleware`
+   (agent middleware) detects a camera-RAW `DataContent`, develops a **neutral** JPEG downscaled to
+   `PHOTO_MAX_LONG_EDGE_PX` (default 2048), and returns it as a `data:image/jpeg;base64,…` URL
+   inside `output_text` — the gateway-safe delivery. It **short-circuits the model** (buffered +
+   streaming). Wired in `AgentConfiguration` (default on, `PHOTO_ENABLED`); `TodoTool` retired
+   (default off). Dockerfile runtime installs `rawtherapee`.
+4. **Vision advice (item #2/#3)** — TODO. Sub-call sends the neutral JPEG (≤1024px long edge is
+   enough), returns `DevelopSettings` JSON, re-develop adjusted. Builds on the same middleware seam.
 
-Also update `Dockerfile` (install rawtherapee at runtime + optional exiftool) and confirm container
-sizing.
+Deploy: re-enable the Foundry agent, `az acr build` the image, verify item #1 end-to-end. Watch the
+inbound request size — a full RAW as base64 `input_file` (~32MB) may hit the gateway limit; use a
+smaller RAW or a stored-blob fallback if rejected.
 
 ## `photo/` lib (phase 1, done)
 
 Standalone Maven module `io.github.weidongxu:raw-photo` (independent build, Java 17); `app` depends
-on it as a binary artifact (matches the app/client/admin workload convention). The Dockerfile build
-stage installs it before packaging `app`; runtime `rawtherapee-cli` is deferred until the feature is
-wired (commented in the Dockerfile).
+on it as a binary artifact. The Dockerfile build stage installs it before packaging `app`; the
+runtime image installs `rawtherapee` (provides `rawtherapee-cli`).
 
 - `DevelopSettings` (+ builder + `fromJson`) — editor-neutral params: WB temp, tint, exposure EV,
-  contrast, saturation, highlight/shadow recovery, tone-curve points. `neutral()` = baseline;
-  `fromJson` maps the vision step's JSON.
+  contrast, saturation, highlight/shadow recovery, tone-curve points, and `maxLongEdgePx` (output
+  downscale to a max long edge, aspect preserved, no upscaling). `neutral()` = baseline; `fromJson`
+  maps the vision step's JSON.
 - `Pp3Writer` — renders settings → RawTherapee 5.12 `pp3` (WB → `[White Balance]`,
-  exposure/contrast/saturation/curve → `[Exposure]`, highlight/shadow → `[Shadows & Highlights]`).
-  Neutral → no profile (baseline needs no `-p`).
+  exposure/contrast/saturation/curve → `[Exposure]`, highlight/shadow → `[Shadows & Highlights]`,
+  `maxLongEdgePx` → `[Resize]`). Neutral → no profile (baseline needs no `-p`).
 - `RawDeveloper` / `RawTherapeeDeveloper` (+ `RawTherapeeOptions`) — invokes
   `rawtherapee-cli -o <out> [-p <pp3>] -j<q> -Y -c <in>` via `ProcessBuilder`; CLI path from
   `RAWTHERAPEE_CLI` env or PATH; succeeds only on exit 0 + non-empty output.
