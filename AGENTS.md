@@ -6,6 +6,10 @@ Keep every doc (including this one, `plan/`, and any new `*.md`) short and to th
 tight bullet points over prose, state only what matters, and cut filler. New documentation must
 be concise.
 
+The root **`README.md` must be self-contained** — it is the public-facing entry point, so do **not**
+link to or reference internal design notes under `plan/`. Put content readers need directly in the
+README; keep `plan/` links inside `plan/` docs and `AGENTS.md`.
+
 ## Goal
 
 Build a **Java Agent Framework** — the Java counterpart to
