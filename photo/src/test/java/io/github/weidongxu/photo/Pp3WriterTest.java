@@ -98,4 +98,34 @@ class Pp3WriterTest {
         DevelopSettings parsed = DevelopSettings.fromJson("{\"max_long_edge_px\":1024}", new ObjectMapper());
         assertEquals(Integer.valueOf(1024), parsed.getMaxLongEdgePx());
     }
+
+    @Test
+    void lensCorrectionProducesLensProfileSection() {
+        DevelopSettings settings = DevelopSettings.builder().lensCorrection(true).build();
+
+        assertFalse(settings.isNeutral());
+        String pp3 = Pp3Writer.toPp3(settings);
+        assertTrue(pp3.contains("[LensProfile]"));
+        assertTrue(pp3.contains("LcMode=lfauto"));
+        assertTrue(pp3.contains("UseDistortion=true"));
+        assertTrue(pp3.contains("UseVignette=true"));
+        assertFalse(pp3.contains("[White Balance]"));
+    }
+
+    @Test
+    void toBuilderCopiesAllFieldsIncludingLensCorrection() {
+        DevelopSettings original = DevelopSettings.builder()
+                .exposureEv(0.5)
+                .addToneCurvePoint(0, 0)
+                .addToneCurvePoint(1, 1)
+                .build();
+
+        DevelopSettings copy = original.toBuilder().lensCorrection(true).build();
+
+        assertTrue(copy.isLensCorrection());
+        String pp3 = Pp3Writer.toPp3(copy);
+        assertTrue(pp3.contains("[LensProfile]"));
+        assertTrue(pp3.contains("Compensation=0.500000"));
+        assertTrue(pp3.contains("Curve=1;0.000000;0.000000;1.000000;1.000000;"));
+    }
 }

@@ -124,6 +124,22 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
      returned "AI-suggested adjustments" with real values
      (`white_balance_temp_k`, `tint`, `exposure_ev`, `contrast`, `saturation`, `highlights`,
      `shadows`) and a valid 2048×1366 / 804KB adjusted JPEG in ~52s.
+5. **Auto lens correction (item #4)** — **implemented & verified live (v14)**. `DevelopSettings`
+   gains a `lensCorrection` flag → `Pp3Writer` emits `[LensProfile] LcMode=lfauto` (distortion +
+   vignetting, `UseCA=false`). App-controlled via `PHOTO_LENS_CORRECTION` (default **true**), applied
+   to the advice preview and the delivered develop. Lensfun auto-matches the camera/lens from RAW
+   metadata; a no-op when the lens is not in the DB (confirmed locally that it *does* match the Fuji
+   lens — corrected output differs from neutral). The note reads "auto lens correction".
+6. **Crop advice (item #5)** — **implemented; applied path verified deterministically**. The advice
+   schema gains an optional `crop` object (normalized edges `left/top/right/bottom` in `[0,1]`). The
+   crop is parsed out (`CropRect`) and applied **app-side** on the developed JPEG (`ImageCrop`,
+   resolution-independent) — not fed to RawTherapee, so no sensor-dimension math is needed. Guards:
+   `CropRect.isMeaningful()` requires the rect to actually trim and keep ≥40% of each dimension, else
+   it's ignored. The model reasons over the (lens-corrected) preview, so fractions align with the
+   final. A tighter crop naturally yields a smaller image; the note reads "Applied crop: `{…}`".
+   Verified via a stubbed-`ChatClient` middleware IT (crop JSON → cropped output). The live model is
+   conservative and rarely returns a crop on its own; the internal advice prompt is fixed, so a
+   user's "crop tighter" text does not reach the vision sub-call.
 
 Deploy: re-enable the Foundry agent, `az acr build` the image, verify item #1 end-to-end. Watch the
 inbound request size — a full RAW as base64 `input_file` (~32MB) may hit the gateway limit; use a

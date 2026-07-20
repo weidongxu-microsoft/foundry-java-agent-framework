@@ -241,6 +241,7 @@ public class AgentConfiguration {
             @Value("${PHOTO_MAX_LONG_EDGE_PX:2048}") int photoMaxLongEdgePx,
             @Value("${PHOTO_ADVICE_ENABLED:true}") boolean photoAdviceEnabled,
             @Value("${PHOTO_ADVICE_LONG_EDGE_PX:1024}") int photoAdviceLongEdgePx,
+            @Value("${PHOTO_LENS_CORRECTION:true}") boolean photoLensCorrection,
             @Value("${MIDDLEWARE_ENABLED:true}") boolean middlewareEnabled) {
         List<Tool> tools = new ArrayList<>();
         tools.add(new HostedWebSearchTool(
@@ -284,7 +285,8 @@ public class AgentConfiguration {
                     objectMapper,
                     model,
                     photoAdviceEnabled,
-                    photoAdviceLongEdgePx > 0 ? photoAdviceLongEdgePx : null));
+                    photoAdviceLongEdgePx > 0 ? photoAdviceLongEdgePx : null,
+                    photoLensCorrection));
         }
         // When enabled, add Agent Skills as a second context provider (progressive disclosure).
         AgentSkillsProvider skills = skillsProvider.getIfAvailable();

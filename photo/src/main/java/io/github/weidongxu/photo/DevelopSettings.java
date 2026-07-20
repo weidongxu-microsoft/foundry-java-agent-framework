@@ -32,6 +32,7 @@ public final class DevelopSettings {
     private final Integer shadows;
     private final List<double[]> toneCurve;
     private final Integer maxLongEdgePx;
+    private final boolean lensCorrection;
 
     private DevelopSettings(Builder builder) {
         this.whiteBalanceTempK = builder.whiteBalanceTempK;
@@ -43,6 +44,7 @@ public final class DevelopSettings {
         this.shadows = builder.shadows;
         this.toneCurve = Collections.unmodifiableList(new ArrayList<>(builder.toneCurve));
         this.maxLongEdgePx = builder.maxLongEdgePx;
+        this.lensCorrection = builder.lensCorrection;
     }
 
     /** The baseline develop: no adjustment (all fields unset). */
@@ -52,6 +54,24 @@ public final class DevelopSettings {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    /** @return a {@link Builder} pre-populated with this instance's values (for deriving a copy). */
+    public Builder toBuilder() {
+        Builder b = builder()
+                .whiteBalanceTempK(whiteBalanceTempK)
+                .tint(tint)
+                .exposureEv(exposureEv)
+                .contrast(contrast)
+                .saturation(saturation)
+                .highlights(highlights)
+                .shadows(shadows)
+                .maxLongEdgePx(maxLongEdgePx)
+                .lensCorrection(lensCorrection);
+        for (double[] point : toneCurve) {
+            b.addToneCurvePoint(point[0], point[1]);
+        }
+        return b;
     }
 
     /**
@@ -112,7 +132,7 @@ public final class DevelopSettings {
     public boolean isNeutral() {
         return whiteBalanceTempK == null && tint == null && exposureEv == null && contrast == null
                 && saturation == null && highlights == null && shadows == null && toneCurve.isEmpty()
-                && maxLongEdgePx == null;
+                && maxLongEdgePx == null && !lensCorrection;
     }
 
     public Integer getWhiteBalanceTempK() {
@@ -157,6 +177,15 @@ public final class DevelopSettings {
         return maxLongEdgePx;
     }
 
+    /**
+     * Whether to apply automatic lens correction (distortion + vignetting) via RawTherapee's Lensfun
+     * auto-matching. It reads the camera/lens from the RAW's metadata and is a no-op when the lens is
+     * not in the Lensfun database, so it is safe to leave on. App-controlled (not model-advised).
+     */
+    public boolean isLensCorrection() {
+        return lensCorrection;
+    }
+
     public static final class Builder {
         private Integer whiteBalanceTempK;
         private Double tint;
@@ -167,6 +196,7 @@ public final class DevelopSettings {
         private Integer shadows;
         private final List<double[]> toneCurve = new ArrayList<>();
         private Integer maxLongEdgePx;
+        private boolean lensCorrection;
 
         public Builder whiteBalanceTempK(Integer kelvin) {
             this.whiteBalanceTempK = kelvin;
@@ -213,6 +243,11 @@ public final class DevelopSettings {
                 throw new IllegalArgumentException("maxLongEdgePx must be >= 1");
             }
             this.maxLongEdgePx = maxLongEdgePx;
+            return this;
+        }
+
+        public Builder lensCorrection(boolean lensCorrection) {
+            this.lensCorrection = lensCorrection;
             return this;
         }
 

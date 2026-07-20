@@ -10,7 +10,8 @@ import java.util.Locale;
  *
  * <p>Section/key names follow RawTherapee 5.12 (verified against a dumped default profile). The
  * mapping is: white balance/tint → {@code [White Balance]}; exposure/contrast/saturation and the
- * tone curve → {@code [Exposure]}; highlight/shadow recovery → {@code [Shadows & Highlights]}.</p>
+ * tone curve → {@code [Exposure]}; highlight/shadow recovery → {@code [Shadows & Highlights]};
+ * auto lens correction → {@code [LensProfile]} ({@code LcMode=lfauto}).</p>
  */
 public final class Pp3Writer {
 
@@ -26,6 +27,16 @@ public final class Pp3Writer {
         sb.append("[Version]\n");
         sb.append("AppVersion=5.12\n");
         sb.append("Version=351\n");
+
+        if (settings.isLensCorrection()) {
+            // Auto lens correction via Lensfun: matches the camera/lens from RAW metadata and corrects
+            // geometric distortion and vignetting. A no-op when the lens is not in the Lensfun DB.
+            sb.append("\n[LensProfile]\n");
+            sb.append("LcMode=lfauto\n");
+            sb.append("UseDistortion=true\n");
+            sb.append("UseVignette=true\n");
+            sb.append("UseCA=false\n");
+        }
 
         if (settings.getWhiteBalanceTempK() != null || settings.getTint() != null) {
             sb.append("\n[White Balance]\n");
