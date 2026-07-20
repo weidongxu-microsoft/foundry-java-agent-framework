@@ -98,6 +98,23 @@ Deploy: re-enable the Foundry agent, `az acr build` the image, verify item #1 en
 inbound request size — a full RAW as base64 `input_file` (~32MB) may hit the gateway limit; use a
 smaller RAW or a stored-blob fallback if rejected.
 
+## Gateway request-size limit + blob-SAS delivery (verified on hosted agent)
+
+- **Finding:** the Foundry `responses` gateway caps inbound request bodies at **~18–19 MB**
+  (probed: 17.3 MB body forwarded, 20 MB body → 400). A real RAF (22–32 MB) as inline base64
+  `input_file.file_data` = ~30 MB body → the gateway rejects it (502/400) before the container
+  is reached. Inline base64 delivery of a full RAW is therefore **not viable** over the gateway.
+- **Solution (shipped):** `input_file`/`input_image` may instead carry an `http(s)` **`file_url`**
+  (e.g. an Azure Blob **SAS URL**). `AgentResponseHandler.fetchUrl` downloads it **server-side**
+  into `DataContent` (capped at 128 MB, 15 s connect / 120 s read timeout). The inbound request
+  stays tiny (~0.5 KB), so the gateway limit is a non-issue.
+- **Verified end-to-end on the hosted agent (v11):** uploaded a 32.5 MB `.RAF` to blob
+  `stweidxumeasar51/raw-uploads`, sent a 0.5 KB `file_url` request → container downloaded the RAF
+  (**egress to Azure Blob works**), developed it, and returned a valid **729.5 KB / 2048×1366**
+  neutral JPEG as a `data:` URL in 32 s. **Item #1 done on Foundry.**
+- Container egress reaching Azure Blob confirms the earlier plan/19 "egress is proxied" caveat does
+  not block outbound HTTPS to blob SAS URLs in this setup.
+
 ## `photo/` lib (phase 1, done)
 
 Standalone Maven module `io.github.weidongxu:raw-photo` (independent build, Java 17); `app` depends

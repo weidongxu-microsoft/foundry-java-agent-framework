@@ -61,6 +61,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class AgentResponseHandler implements ResponseHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AgentResponseHandler.class);
 
+    /** Maximum size of a server-side attachment-URL download (guards against unbounded memory). */
+    private static final long MAX_FETCH_BYTES = 128L * 1024 * 1024;
+
     private final Agent agent;
     private final ObjectMapper objectMapper;
     private final Duration streamingTimeout;
@@ -556,10 +559,13 @@ public final class AgentResponseHandler implements ResponseHandler {
      * Parses a Responses message {@code content} (a string or a list of typed parts) into framework
      * {@link ChatContent}. Text parts ({@code input_text}/{@code text}) are concatenated into a
      * leading {@link TextContent}; binary parts ({@code input_file} with base64 {@code file_data},
-     * or {@code input_image} with a data-URL {@code image_url}) become {@link DataContent}. A text
+     * or {@code input_image} with a data-URL {@code image_url}) become {@link DataContent}. An
+     * {@code input_file}/{@code input_image} carrying an {@code http(s)} URL ({@code file_url} or
+     * {@code image_url}, e.g. a blob SAS URL) is downloaded server-side into {@link DataContent} so
+     * large attachments that exceed the gateway request-size limit can still be delivered. A text
      * breadcrumb naming any attachments is appended so a text-only model still knows they are
      * present even though the bytes are never forwarded upstream. Unresolvable references
-     * ({@code file_id}/{@code file_url}) are ignored.
+     * ({@code file_id}) are ignored.
      */
     private static List<ChatContent> contentParts(Object content) {
         List<ChatContent> parts = new ArrayList<>();
@@ -630,7 +636,7 @@ public final class AgentResponseHandler implements ResponseHandler {
                 LOG.warn("Ignoring input_file with unparsable file_data: {}", error.getMessage());
             }
         }
-        return null;
+        return fetchUrl(value(part.get("file_url")), filename);
     }
 
     private static DataContent dataFromImagePart(Map<?, ?> part) {
@@ -644,8 +650,83 @@ public final class AgentResponseHandler implements ResponseHandler {
             } catch (IllegalArgumentException error) {
                 LOG.warn("Ignoring input_image with unparsable image_url: {}", error.getMessage());
             }
+            return null;
         }
-        return null;
+        return fetchUrl(url, value(part.get("filename")));
+    }
+
+    /**
+     * Downloads an {@code http(s)} attachment URL (e.g. a blob SAS URL) into a {@link DataContent}.
+     * Non-http references and failures are ignored (returns {@code null}). The download is capped at
+     * {@link #MAX_FETCH_BYTES} to avoid unbounded memory use.
+     */
+    private static DataContent fetchUrl(String url, String filename) {
+        if (url == null) {
+            return null;
+        }
+        String lower = url.toLowerCase(java.util.Locale.ROOT);
+        if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
+            return null;
+        }
+        String name = filename != null && !filename.isEmpty() ? filename : fileNameFromUrl(url);
+        try {
+            java.net.HttpURLConnection connection =
+                    (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+            connection.setConnectTimeout(15_000);
+            connection.setReadTimeout(120_000);
+            connection.setInstanceFollowRedirects(true);
+            int status = connection.getResponseCode();
+            if (status < 200 || status >= 300) {
+                LOG.warn("Ignoring attachment URL {}: HTTP {}", name, status);
+                connection.disconnect();
+                return null;
+            }
+            String contentType = connection.getContentType();
+            byte[] bytes;
+            try (java.io.InputStream in = connection.getInputStream()) {
+                bytes = readCapped(in, MAX_FETCH_BYTES);
+            } finally {
+                connection.disconnect();
+            }
+            if (bytes == null) {
+                LOG.warn("Ignoring attachment URL {}: exceeds {} bytes", name, MAX_FETCH_BYTES);
+                return null;
+            }
+            String mediaType = contentType != null && !contentType.isEmpty()
+                            && !contentType.startsWith("application/octet-stream")
+                    ? contentType.split(";", 2)[0].trim()
+                    : mediaTypeForName(name);
+            return new DataContent(bytes, mediaType, name);
+        } catch (java.io.IOException error) {
+            LOG.warn("Ignoring attachment URL {}: {}", name, error.getMessage());
+            return null;
+        }
+    }
+
+    private static byte[] readCapped(java.io.InputStream in, long cap) throws java.io.IOException {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[64 * 1024];
+        long total = 0;
+        int read;
+        while ((read = in.read(buffer)) != -1) {
+            total += read;
+            if (total > cap) {
+                return null;
+            }
+            out.write(buffer, 0, read);
+        }
+        return out.toByteArray();
+    }
+
+    private static String fileNameFromUrl(String url) {
+        String path = url;
+        int query = path.indexOf('?');
+        if (query >= 0) {
+            path = path.substring(0, query);
+        }
+        int slash = path.lastIndexOf('/');
+        String name = slash >= 0 ? path.substring(slash + 1) : path;
+        return name.isEmpty() ? "attachment" : name;
     }
 
     private static String mediaTypeForName(String name) {

@@ -143,6 +143,50 @@ class AgentResponseHandlerTest {
     }
 
     @Test
+    void fetchesInputFileUrlAttachmentServerSide() throws Exception {
+        byte[] bytes = new byte[] {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+        com.sun.net.httpserver.HttpServer server =
+                com.sun.net.httpserver.HttpServer.create(
+                        new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/blob/shot.RAF", exchange -> {
+            exchange.getResponseHeaders().set("Content-Type", "application/octet-stream");
+            exchange.sendResponseHeaders(200, bytes.length);
+            exchange.getResponseBody().write(bytes);
+            exchange.close();
+        });
+        server.start();
+        try {
+            int port = server.getAddress().getPort();
+            String url = "http://127.0.0.1:" + port + "/blob/shot.RAF?sig=fake";
+            CapturingAgent agent = new CapturingAgent(AgentResponse.builder()
+                    .message(ChatMessage.assistant("ok"))
+                    .build());
+            AgentResponseHandler handler = new AgentResponseHandler(agent, objectMapper);
+
+            handler.handle(
+                    new ResponseRequest(Map.of("input", List.of(Map.of(
+                            "role", "user",
+                            "content", List.of(
+                                    Map.of("type", "input_text", "text", "develop this"),
+                                    Map.of("type", "input_file", "file_url", url)))))),
+                    buffered(),
+                    new MockSink());
+
+            ChatMessage message = agent.messages.get(0);
+            assertTrue(message.getText().contains("shot.RAF"));
+            DataContent data = (DataContent) message.getContents().stream()
+                    .filter(DataContent.class::isInstance)
+                    .findFirst()
+                    .orElseThrow(AssertionError::new);
+            assertArrayEquals(bytes, data.getData());
+            assertEquals("shot.RAF", data.getName());
+            assertEquals("image/x-fuji-raf", data.getMediaType());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
     void hasNoSessionWithoutIdentity() throws Exception {        CapturingAgent agent = new CapturingAgent(AgentResponse.builder()
                 .message(ChatMessage.assistant("hello"))
                 .build());
