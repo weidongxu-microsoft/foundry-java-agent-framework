@@ -21,6 +21,7 @@ index below. Keep entries concise (see `AGENTS.md` → *Writing docs*).
 | [16-samples-parity.md](16-samples-parity.md) | Samples parity with MAF (`python/samples`, `dotnet/samples`): maps MAF's `01`–`05` progression to a Java `samples/` tree (independent builds). Scaffolded; code TBD. |
 | [17-framework-pitch-ppt.md](17-framework-pitch-ppt.md) | **Pitch-deck outline** (~12 slides) on the framework's advantages vs. the hand-rolled `foundry-java-hosted-agent/app/` baseline (~2,482 LoC → config). Slides, baseline facts, demo/backup. |
 | [18-framework-pitch-deck.md](18-framework-pitch-deck.md) | **Generatable Marp deck source** (edit-then-`marp-cli`→pptx/pdf) built from doc 17: 13 slides + speaker notes. |
+| [19-raw-photo-tool.md](19-raw-photo-tool.md) | Feasibility + design for a **RAW-photo** workload (replace demo `TodoTool`): develop camera RAW → adjusted JPEG with gpt-5.4 vision. Needs the multimodal content gap closed; native RAW developer (rawtherapee-cli) via `ProcessBuilder`. |
 
 > **Maintaining this index:** add a row for every new `plan/NN-topic.md`. See `AGENTS.md`
 > → *Design docs* for the naming + parity-ledger conventions.

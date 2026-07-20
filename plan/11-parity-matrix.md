@@ -33,7 +33,8 @@ Legend columns: **.NET** / **Py** = present in reference; **Java** = our status.
 | `ChatClientAgent` auto-composes function-invoking pipeline | ✅ | ✅ | ✅ | `core-impl/impl/ChatClientAgent.java` | |
 | Streaming (`Flow.Publisher`) | ✅ | ✅ | ✅ | `ChatResponseUpdate` | JDK-native, no Reactor. |
 | Structured output (`ResponseFormat` json / json-schema) | ✅ | ✅ | ✅ | `core/chat/ResponseFormat.java` | |
-| Content types (text / func call / result / approvals) | ✅ | ✅ | ✅ | `core/chat/*Content.java` | |
+| Content types (text / func call / result / approvals) | ✅ | ✅ | ⚠️ | `core/chat/*Content.java` | Text/FunctionCall/FunctionResult/ToolApproval done. **Missing:** binary/image content (`DataContent`/`UriContent`) — no multimodal in/out (see below + `plan/19`). |
+| Multimodal content (image/data in + out) | ✅ | ✅ | ❌ | — | Input flattened to text (`AgentResponseHandler.contentText`), model client sends text only (`OpenAIResponsesChatClient.mapMessage`), tools return `String`. OpenAI SDK vision-in (`ResponseInputImage`) available. Blocks the RAW-photo workload (`plan/19`). |
 
 ## Tools
 
@@ -156,6 +157,7 @@ parity targets**. Priority order:
 4. **Local MCP enhancements** ⚠️ — progressive load/unload, websocket transport, MCP prompts/sampling/tasks.
 5. ~~**Agent-as-tool** (`AsAIFunction`)~~ ✅ **Done** (`core/tool/AgentTool` + `AgentToolOptions`; wraps an `Agent` as a `Tool` — single `query` param → response text; name/description default to the agent, sanitized).
 6. ~~**Provider-agnostic / file-backed chat history**~~ ✅ **Done** (`core-impl/FileChatHistoryProvider`; shared `core/chat/ChatMessageJsonCodec`).
+7. **Multimodal content (image/data in + out)** ❌ — `DataContent`/`UriContent` in core; accept `input_image`/`input_file` in `AgentResponseHandler`; map `input_image` in `OpenAIResponsesChatClient`; image/URL output. Motivating workload: RAW-photo tool (`plan/19`).
 
 Next: all 12 cross-language context providers, durable tool approvals
 (`FileToolApprovalStore`), and the Foundry provider auth/config convenience layer
