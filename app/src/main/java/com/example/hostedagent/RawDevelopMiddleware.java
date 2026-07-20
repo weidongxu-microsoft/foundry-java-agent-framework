@@ -78,7 +78,12 @@ final class RawDevelopMiddleware implements AgentMiddleware {
                     + "1.0 neutral, >1 greener), exposure_ev (double stops, e.g. -1.0..1.0), contrast "
                     + "(integer -100..100), saturation (integer -100..100), highlights (integer "
                     + "-100..100, positive recovers blown highlights), shadows (integer -100..100, "
-                    + "positive lifts shadows). Omit any key you would leave unchanged.";
+                    + "positive lifts shadows), and tone_curve (an array of [x, y] control points, "
+                    + "each in [0,1], strictly ascending in x, defining a tonal curve where x is input "
+                    + "and y is output brightness; include the endpoints [0,0] and [1,1] and 1-3 "
+                    + "interior points, e.g. a gentle S-curve like [[0,0],[0.25,0.22],[0.75,0.80],[1,1]] "
+                    + "for more contrast; omit it for a straight tonal response). Omit any key you "
+                    + "would leave unchanged.";
 
     private static final String ADVICE_USER =
             "Suggest adjustment values to develop this photo well. Return only the JSON object.";

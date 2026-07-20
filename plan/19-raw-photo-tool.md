@@ -124,6 +124,12 @@ Parity target for the content types: MAF's `DataContent` (inline bytes + media t
      returned "AI-suggested adjustments" with real values
      (`white_balance_temp_k`, `tint`, `exposure_ev`, `contrast`, `saturation`, `highlights`,
      `shadows`) and a valid 2048×1366 / 804KB adjusted JPEG in ~52s.
+   - **Tone curve (item #6) — advised & verified live (v16).** The advice schema already parsed a
+     `tone_curve` (array of `[x,y]` control points, RawTherapee `[Exposure] Curve=1;…` spline), but the
+     prompt did not advertise it, so the model never returned one. Added tone-curve guidance (S-curve
+     example, `[0,0]`/`[1,1]` endpoints) to `ADVICE_SYSTEM`. The model now returns e.g.
+     `[[0,0],[0.2,0.26],[0.75,0.78],[1,1]]`, applied through `Pp3Writer` (confirmed locally that a
+     curve pp3 develops cleanly and differs from neutral). Verified e2e on v16.
 5. **Auto lens correction (item #4)** — **implemented & verified live (v14)**. `DevelopSettings`
    gains a `lensCorrection` flag → `Pp3Writer` emits `[LensProfile] LcMode=lfauto` (distortion +
    vignetting, `UseCA=false`). App-controlled via `PHOTO_LENS_CORRECTION` (default **true**), applied
