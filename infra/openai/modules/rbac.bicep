@@ -1,8 +1,5 @@
 targetScope = 'resourceGroup'
 
-@description('Azure OpenAI account name.')
-param azureOpenAIAccountName string
-
 @description('Foundry account name.')
 param foundryAccountName string
 
@@ -20,10 +17,6 @@ param foundryProjectPrincipalId string
 
 @description('Stable role assignments required by the resource topology.')
 param rbac object
-
-resource azureOpenAIAccount 'Microsoft.CognitiveServices/accounts@2026-05-01' existing = {
-  name: azureOpenAIAccountName
-}
 
 resource foundryAccount 'Microsoft.CognitiveServices/accounts@2026-05-01' existing = {
   name: foundryAccountName
@@ -44,16 +37,6 @@ var foundryUserRoleDefinitionId = subscriptionResourceId(
 var acrPullRoleDefinitionId = subscriptionResourceId(
   'Microsoft.Authorization/roleDefinitions',
   rbac.roleDefinitionIds.acrPull)
-
-resource userOnAzureOpenAI 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(rbac.userPrincipalId)) {
-  name: rbac.assignmentNames.userOnAzureOpenAI
-  scope: azureOpenAIAccount
-  properties: {
-    principalId: rbac.userPrincipalId
-    principalType: 'User'
-    roleDefinitionId: foundryUserRoleDefinitionId
-  }
-}
 
 resource userOnFoundry 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!empty(rbac.userPrincipalId)) {
   name: rbac.assignmentNames.userOnFoundry

@@ -7,7 +7,6 @@ resource IDs, principal IDs, regions, model versions, and capacities live in the
 ## Coverage
 
 - Resource group (subscription-scope deployment)
-- Azure OpenAI account + model deployments
 - Foundry account + project + model deployments
 - Azure Container Registry
 - Log Analytics, Application Insights, smart-detection action group

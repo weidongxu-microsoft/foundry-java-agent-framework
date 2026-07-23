@@ -12,9 +12,6 @@ param resourceGroupLocation string
 @description('Tags applied to the resource group.')
 param resourceGroupTags object = {}
 
-@description('Azure OpenAI account and deployment configuration.')
-param azureOpenAI object
-
 @description('Foundry account, project, and model deployment configuration.')
 param foundry object
 
@@ -64,7 +61,6 @@ module aiModule './modules/ai.bicep' = {
   name: 'openai-ai-resources'
   scope: resourceGroup
   params: {
-    azureOpenAI: azureOpenAI
     foundry: foundry
   }
 }
@@ -76,7 +72,6 @@ module rbacModule './modules/rbac.bicep' = {
     registryModule
   ]
   params: {
-    azureOpenAIAccountName: azureOpenAI.name
     foundryAccountName: foundry.name
     foundryProjectName: foundry.project.name
     registryName: registry.name
@@ -87,7 +82,6 @@ module rbacModule './modules/rbac.bicep' = {
 }
 
 output resourceGroupId string = resourceGroup.id
-output azureOpenAIAccountId string = aiModule.outputs.azureOpenAIAccountId
 output foundryAccountId string = aiModule.outputs.foundryAccountId
 output foundryProjectId string = aiModule.outputs.foundryProjectId
 output registryLoginServer string = registryModule.outputs.loginServer
