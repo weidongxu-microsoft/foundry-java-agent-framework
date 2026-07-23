@@ -11,10 +11,12 @@ resource IDs, principal IDs, regions, model versions, and capacities live in the
 - Foundry account + project + model deployments
 - Azure Container Registry
 - Log Analytics, Application Insights, smart-detection action group
+- Storage account + blob containers (app data, e.g. RAW uploads)
 - Stable RBAC: user access, Foundry account/project ACR pull, project access to Foundry account
 
-Not ARM-managed: ACR image content, Foundry hosted-agent versions/state, memory stores, and runtime
-sessions. Restore those after Bicep; see `plan/15-agent-deploy-rest-api.md` and `admin/`.
+Not ARM-managed: ACR image content, Foundry hosted-agent versions/state, memory stores, runtime
+sessions, the `java-hosted-agent-bootstrap` app registration, and the hosted-agent generated-identity
+role assignments. Restore those after Bicep; see `plan/15-agent-deploy-rest-api.md` and `admin/`.
 
 ## Validate
 
@@ -34,10 +36,12 @@ Or run the checked wrapper:
 .\infra\openai\what-if.ps1
 ```
 
-The wrapper fails on unexpected drift. The unchanged baseline currently reports 14 `NoChange`
-resources and five provider artifacts only: Foundry-computed A365/project properties and role
-assignments whose system-assigned principal IDs remain symbolic during `what-if`. Investigate any
-resource replacement/deletion or SKU, model, capacity, identity, network, or other RBAC change.
+The wrapper fails on unexpected drift. Expect the storage account, its blob service, and the
+`raw-uploads` container to show as `Create` until the updated template is first deployed; the prior
+Foundry baseline otherwise reports `NoChange` plus a few provider artifacts only (Foundry-computed
+A365/project properties and role assignments whose system-assigned principal IDs remain symbolic
+during `what-if`). Investigate any resource replacement/deletion or SKU, model, capacity, identity,
+network, or other RBAC change.
 
 ## Restore
 

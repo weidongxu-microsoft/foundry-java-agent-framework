@@ -27,6 +27,9 @@ param monitoring object
 @description('Stable role assignments required by the resource topology.')
 param rbac object
 
+@description('Storage account and blob container configuration for app data.')
+param storage object
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2024-11-01' = {
   name: resourceGroupName
   location: resourceGroupLocation
@@ -46,6 +49,14 @@ module monitoringModule './modules/monitoring.bicep' = {
   scope: resourceGroup
   params: {
     monitoring: monitoring
+  }
+}
+
+module storageModule './modules/storage.bicep' = {
+  name: 'openai-storage'
+  scope: resourceGroup
+  params: {
+    storage: storage
   }
 }
 
@@ -81,4 +92,5 @@ output foundryAccountId string = aiModule.outputs.foundryAccountId
 output foundryProjectId string = aiModule.outputs.foundryProjectId
 output registryLoginServer string = registryModule.outputs.loginServer
 output applicationInsightsId string = monitoringModule.outputs.applicationInsightsId
+output storageAccountId string = storageModule.outputs.storageAccountId
 output deploymentRegion string = deploymentLocation
